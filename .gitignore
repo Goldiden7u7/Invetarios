@@ -19,8 +19,10 @@ coverage
 .swc
 _static
 out
-dist
 build
+
+# NOTA: dist/ SI se sube a proposito, para que se pueda usar el sistema
+# compilado sin instalar Node. Se regenera con: npm run build:listo
 
 # environment variables
 .env

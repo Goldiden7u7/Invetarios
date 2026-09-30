@@ -44,52 +44,137 @@ sistema descuenta el stock automaticamente segun esa receta.
 
 ---
 
-## Instalacion paso a paso
+## Elige como quieres usar el proyecto
 
-### 1. Clonar el proyecto
+Hay **tres formas** de trabajar con este repositorio. Elige la que necesitas:
+
+| | Opcion | Para quien es | Necesitas Node |
+|---|---|---|---|
+| **1** | [Usar la version compilada](#opcion-1-usar-la-version-compilada) | Solo quieres que **funcione**, sin programar | No |
+| **2** | [Modificar el codigo](#opcion-2-modificar-el-codigo) | Vas a **cambiar cosas** en la app | Si |
+| **3** | [Publicar en un hosting](#opcion-3-publicar-en-un-hosting-cpanel) | Vas a ponerlo **en internet** para tus clientes | No |
+
+---
+
+## Opcion 1: Usar la version compilada
+
+**La mas facil.** No necesitas Node.js, ni Vite, ni compilar nada.
+La carpeta `dist/` ya viene armada con la API adentro.
+
+**1. Crea la base de datos**
+
+Abre **phpMyAdmin** (<http://localhost/phpmyadmin>), crea la base
+`inventario_db` con cotejamiento `utf8mb4_unicode_ci`, seleccionala e
+importa el archivo `sql/inventario_db.sql` (pestana **Importar**).
+
+**2. Arranca el servidor** (desde la carpeta `dist`)
 
 ```bash
-git clone https://github.com/Goldiden7u7/Invetarios.git
-cd Invetarios
+# Windows
+C:\xampp\php\php.exe -S 127.0.0.1:8080 -t dist
+
+# Linux / Mac
+php -S 127.0.0.1:8080 -t dist
 ```
 
-> Si el repositorio es privado, GitHub te pedira iniciar sesion. En GitHub
-> Desktop: **File → Clone repository**.
+**3. Entra** en <http://127.0.0.1:8080>
 
-### 2. Levantar MySQL y crear la base de datos
+| | |
+|---|---|
+| **Correo** | `admin@inventario.com` |
+| **Contrasena** | `Admin123!` |
 
-Con XAMPP, abre el **Control Panel** y dale **Start** a MySQL.
+Eso es todo. Hay un `LEEME.txt` dentro de `dist/` con estas mismas
+instrucciones, por si se la pasas a otra persona.
 
-Luego abre **phpMyAdmin** (<http://localhost/phpmyadmin>) y crea la base de datos
-llamada **`inventario_db`** con cotejamiento `utf8mb4_unicode_ci`.
+---
 
-> Ojo: el nombre debe ser exactamente `inventario_db` (salvo que lo cambies
-> en el paso 3).
+## Opcion 2: Modificar el codigo
 
-### 3. Importar las tablas y datos de ejemplo
+**Para desarrollar.** Con recarga en caliente: cambias un archivo, se
+actualiza solo en el navegador.
 
-En phpMyAdmin, selecciona la base `inventario_db` y ve a la pestana
-**Importar**. Elige el archivo:
+**1. Instala las dependencias**
 
+```bash
+npm install
 ```
-sql/inventario_db.sql
+
+**2. Arranca la API** (en una terminal, desde la raiz del proyecto)
+
+```bash
+C:\xampp\php\php.exe -S 127.0.0.1:8080 -t api
 ```
 
-y dale **Continuar / Ejecutar**.
+*(Linux/Mac: `php -S 127.0.0.1:8080 -t api`)*
 
-Esto crea las 19 tablas y carga el catalogo de ejemplo: 24 productos,
-12 combos, las recetas, los 6 roles y el usuario administrador.
+**3. Arranca la app** (en **otra** terminal)
 
-### 4. Configurar la conexion (normalmente no hace falta nada)
+```bash
+npm run dev
+```
 
-El archivo **`api/config.php`** ya viene con los valores locales de XAMPP
-(`localhost`, usuario `root`, sin contrasena, base `inventario_db`), asi que
-en un XAMPP recien instalado no hay nada que tocar.
+Abre <http://localhost:3039>.
 
-Si tu MySQL tiene otro usuario o contrasena, hay dos formas:
+> **Por que dos servidores?** En desarrollo el frontend y el API viven en
+> puertos distintos. Vite hace de intermediario (proxy) y por eso la
+> sesion con cookies funciona igual que en produccion. En la Opcion 1 no
+> hace falta porque todo va en el mismo puerto.
 
-**Opcion A — Crear `api/config.local.php`** (recomendada, ese archivo NO se
-sube a GitHub):
+**4. Regenerar la version compilada** cuando quieras publicarla
+
+```bash
+npm run build:listo
+```
+
+Esto compila la app **y** deja la API copiada adentro de `dist/`, listo
+para subir a un hosting o para entregarselo a alguien.
+
+### Comandos utiles
+
+| Comando | Que hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo con recarga en caliente |
+| `npm run build:listo` | Compila y arma `dist/` completo |
+| `npm run lint` | Revisa errores de codigo |
+| `npm run lint:fix` | Corrige los errores automatiquement |
+| `npm run fm:fix` | Formatea el codigo |
+
+---
+
+## Opcion 3: Publicar en un hosting (cPanel)
+
+1. Compila: `npm run build:listo`
+2. Sube **todo el contenido de `dist/`** a `public_html/` de tu hosting.
+   Como la API ya viene dentro, te queda asi:
+   ```
+   public_html/
+     index.html
+     assets/
+     api/          <- ya incluido
+   ```
+3. Crea la base de datos en cPanel e importa `sql/inventario_db.sql`.
+4. Crea el archivo **`public_html/api/config.local.php`** con los datos de
+   tu cPanel, o define las variables de entorno `DB_HOST`, `DB_USER`,
+   `DB_PASS` y `DB_NAME`.
+5. En `api/config.php` pon `MODO_DEBUG` en `0` y ajusta `CORS_ORIGENES`
+   con tu dominio.
+6. **Cambia la contrasena del administrador.**
+
+Mas detalle en **[MANUEL_INSTALACION.md](MANUEL_INSTALACION.md)**.
+
+---
+
+## Configurar la conexion a la base de datos
+
+El archivo **`api/config.php`** ya trae los valores locales de XAMPP
+(`localhost`, usuario `root`, sin contrasena, `inventario_db`), asi que en
+un XAMPP recien instalado no hay nada que tocar.
+
+Si tu MySQL es distinto, hay dos formas:
+
+**Opcion A — Crear `api/config.local.php`** (recomendada; ese archivo **no**
+se sube a GitHub):
 
 ```php
 <?php
@@ -101,32 +186,6 @@ define('DB_NAME', 'inventario_db');
 
 **Opcion B — Variables de entorno**, sin tocar el codigo: define `DB_HOST`,
 `DB_USER`, `DB_PASS` y `DB_NAME` antes de arrancar PHP.
-
-### 5. Instalar las dependencias del frontend
-
-```bash
-npm install
-```
-
-### 6. Arrancar la API (en una terminal)
-
-```bash
-C:\xampp\php\php.exe -S 127.0.0.1:8080 -t api
-```
-
-*(en Linux/Mac: `php -S 127.0.0.1:8080 -t api`)*
-
-Deja esa terminal abierta. Si al ejecutarlo dice que el puerto 8080 esta
-ocupado, puedes cambiarlo: la app lee la variable `API_URL`, por ejemplo
-`$env:API_URL="http://127.0.0.1:8090"` antes de correr `npm run dev`.
-
-### 7. Arrancar la app (en otra terminal)
-
-```bash
-npm run dev
-```
-
-Abre <http://localhost:3039>.
 
 ---
 
@@ -185,39 +244,39 @@ api/                 API PHP (un archivo por recurso)
   semilla_ventas.php Genera ventas de ejemplo
 sql/
   inventario_db.sql  Esquema + datos de ejemplo
-src/
+src/                 Codigo fuente de la app (React + TypeScript)
   sections/          Una carpeta por modulo (caja, cocina, inventario...)
   layouts/           Estructura general y menu lateral
   theme/             Colores y estilos
   types/             Tipos de TypeScript del dominio
+scripts/
+  preparar-compilado.mjs   Arma dist/ con la API incluida
+dist/                Version COMPILADA, lista para usar (no necesita Node)
+  index.html         Se sube tal cual a un hosting
+  assets/            Archivos optimizados
+  api/               Copia de la API, para servir todo desde un solo origen
+  LEEME.txt          Instrucciones de uso sin Node
 ```
 
 ---
 
 ## Publicar en un hosting (cPanel)
 
-1. Sube el contenido de `dist/` (generalo con `npm run build`) a `public_html/`.
-2. Sube la carpeta `api/` a `public_html/api/`.
-3. Crea la base de datos en cPanel e importa `sql/inventario_db.sql`.
-4. Crea `api/config.local.php` con los datos de tu cPanel, o define las
-   variables de entorno `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME`.
-5. En `api/config.php` pon `MODO_DEBUG` en `0` y ajusta `CORS_ORIGENES`
-   con tu dominio.
-6. Verifica que tu hosting ejecuta los `.php` (no los muestra como texto) y
-   que existe el archivo `.htaccess` que bloquea el acceso directo a la API.
-7. Cambia la contrasena del administrador.
-
-Mas detalle en **[MANUEL_INSTALACION.md](MANUEL_INSTALACION.md)**.
+> Ya esta explicado arriba en la **Opcion 3**. Los pasos completos, con
+> seguridad y archivos `.htaccess`, estan en
+> **[MANUEL_INSTALACION.md](MANUEL_INSTALACION.md)**.
 
 ---
 
 ## Problemas frecuentes
 
 **"No se pudo conectar con la API"**
-La terminal del paso 6 esta cerrada, o MySQL no esta arrancado en XAMPP.
+La terminal donde arrancaste el servidor esta cerrada, o MySQL no esta
+arrancado en XAMPP.
 
 **"El puerto 8080 esta ocupado"**
-Cambia el puerto del paso 6 y define `API_URL` con el mismo antes del paso 7.
+Cambia el puerto del comando y, si usas la Opcion 2, define `API_URL` con
+el mismo valor antes de correr `npm run dev`.
 
 **"Access denied for user"**
 Los datos en `api/config.local.php` no coinciden con los de tu MySQL.

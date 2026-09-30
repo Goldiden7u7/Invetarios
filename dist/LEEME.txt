@@ -1,0 +1,53 @@
+COMO USAR ESTA VERSION COMPILADA
+====================================
+
+No necesitas Node.js ni Vite. Solo PHP y MySQL (por ejemplo XAMPP).
+
+PASO 1 - Crear la base de datos
+-------------------------------
+Abre phpMyAdmin (http://localhost/phpmyadmin), crea la base de datos
+llamada  inventario_db  con cotejamiento  utf8mb4_unicode_ci,
+seleccionala e importa el archivo:
+
+    sql/inventario_db.sql
+
+PASO 2 - Arrancar el servidor
+-----------------------------
+Desde esta carpeta (dist) ejecuta:
+
+    Windows:  C:\xampp\php\php.exe -S 127.0.0.1:8080 -t .
+    Linux:    php -S 127.0.0.1:8080 -t .
+
+Deja esa terminal abierta.
+
+PASO 3 - Entrar
+---------------
+Abre  http://127.0.0.1:8080
+
+    Correo:      admin@inventario.com
+    Contrasena:  Admin123!
+
+CAMBIA ESA CONTRASENA apenas entres (menu Usuarios).
+
+NOTA - Si tu MySQL no es el de XAMPP
+------------------------------------
+Crea el archivo  api/config.local.php  con tus datos:
+
+    <?php
+    define('DB_HOST', 'localhost');
+    define('DB_USER', 'root');
+    define('DB_PASS', 'tu_contrasena');
+    define('DB_NAME', 'inventario_db');
+
+PRUEBAS DEL BACKEND
+-------------------
+Con el servidor del paso 2 corriendo, abre:
+
+    http://127.0.0.1:8080/pruebas.php
+
+Debe decir "142 correctas, 0 fallidas".
+
+VENTAS DE EJEMPLO
+-----------------
+    http://127.0.0.1:8080/semilla_ventas.php
+
