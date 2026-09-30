@@ -29,9 +29,11 @@ build
 .env.test.local
 .env.production.local
 
-# Credenciales de la base de datos (NUNCA subir)
-# Copia api/config.ejemplo.php como api/config.php y editala en tu equipo.
-api/config.php
+# Credenciales reales de la base de datos.
+# OJO: api/config.php SI se sube (no tiene secretos, usa variables de
+# entorno). Lo que NO se sube es este archivo opcional, donde puedes
+# poner los datos de tu hosting sin tocar el codigo.
+api/config.local.php
 
 # misc
 .DS_Store
