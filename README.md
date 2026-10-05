@@ -142,6 +142,92 @@ para subir a un hosting o para entregarselo a alguien.
 
 ---
 
+## Tu rutina diaria de trabajo
+
+Si estas haciendo cambios con la **Opcion 2**, el ciclo es siempre el mismo:
+
+```
+   1. ABRIR        Arranca la API y el servidor de desarrollo
+        |
+   2. MODIFICAR    Edita archivos; el navegador se actualiza solo
+        |
+   3. GUARDAR      Un comando y ya esta en GitHub
+```
+
+### 1. Abrir (dos terminales)
+
+Terminal 1 — la API:
+```bash
+C:\xampp\php\php.exe -S 127.0.0.1:8080 -t api
+```
+
+Terminal 2 — la app:
+```bash
+npm run dev
+```
+
+Abre <http://localhost:3039> y trabaja.
+
+### 2. Modificar
+
+Edita lo que quieras en `src/` o `api/`. Guarda el archivo y la pagina se
+actualiza sola. No hace falta recargar a mano ni reiniciar nada.
+
+### 3. Guardar y subir
+
+Cuando quieras subir tus cambios a GitHub:
+
+```bash
+npm run guardar
+```
+
+Te preguntara **que cambiaste**. Escribe algo corto y claro, por ejemplo:
+
+```
+arregle el color del boton de cobrar
+```
+
+Y eso es todo: el comando hace el `add`, el `commit` y el `push`. En unos
+segundos tu cambio ya esta en <https://github.com/Goldiden7u7/Invetarios>.
+
+> **Atajo:** si prefieres que no te pregunte, escribe el mensaje directo:
+> ```bash
+> npm run guardar -- "arregle el color del boton"
+> ```
+
+### 4. Si cambiaste codigo de la app
+
+Antes de subir, regenera la version compilada para que no quede desfasada:
+
+```bash
+npm run build:listo
+npm run guardar
+```
+
+> El comando `npm run guardar` te avisa con un mensaje cuando detecta que
+> tocaste `src/` o `api/`, para que no se te olvide este paso.
+
+### Si prefieres hacerlo a mano
+
+Son tres comandos, en la carpeta del proyecto:
+
+```bash
+git add .                              # preparar los cambios
+git commit -m "mensaje corto"          # guardarlos con una descripcion
+git push                               # subirlos a GitHub
+```
+
+### Que NUNCA se sube a GitHub
+
+Esto esta en `.gitignore`, asi que es imposible subirlo por accidente:
+
+| | |
+|---|---|
+| `api/config.local.php` | Tus datos reales de base de datos |
+| `node_modules/` | Dependencias (se reinstalan con `npm install`) |
+
+---
+
 ## Opcion 3: Publicar en un hosting (cPanel)
 
 1. Compila: `npm run build:listo`
