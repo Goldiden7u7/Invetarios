@@ -35,17 +35,23 @@ export const navData: NavItem[] = [
     title: 'Resumen',
     path: '/',
     icon: icon('solar:home-smile-bold-duotone'),
+    // Las cifras de ventas son del administrador: quien cobra o cocina no
+    // las necesita y el menu se lo esconde.
+    permiso: PERMISO.ventas,
   },
   {
     title: 'Caja',
     path: '/caja',
     icon: icon('solar:wallet-money-bold-duotone'),
-    permiso: PERMISO.crear,
+    // Necesita los dos bits: poder crear ventas Y estar en el modulo Caja.
+    // eslint-disable-next-line no-bitwise -- los permisos SON banderas de bits
+    permiso: PERMISO.crear | PERMISO.caja,
   },
   {
     title: 'Cocina',
     path: '/cocina',
     icon: icon('solar:chef-hat-bold-duotone'),
+    permiso: PERMISO.cocina,
   },
   {
     title: 'Inventario',

@@ -61,7 +61,9 @@ type CobroModalState = { abierto: boolean; resultado: RespuestaCrearVenta | null
 
 export function CajaView() {
   const { puede } = useAuth();
-  const puedeVender = puede(PERMISO.crear);
+  // Los dos bits: poder crear y estar en el modulo Caja.
+  // eslint-disable-next-line no-bitwise -- los permisos SON banderas de bits
+  const puedeVender = puede(PERMISO.crear | PERMISO.caja);
 
   const {
     combos,

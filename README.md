@@ -277,6 +277,8 @@ define('DB_NAME', 'inventario_db');
 
 ## Entrar al sistema
 
+Empieza por el administrador:
+
 | | |
 |---|---|
 | **Correo** | `admin@inventario.com` |
@@ -284,6 +286,9 @@ define('DB_NAME', 'inventario_db');
 
 > **Cambia esta clave apenas entres.** Ve a **Usuarios**, edita el
 > administrador y pon una contrasena propia.
+
+Tambien hay una cuenta de **caja** y una de **cocina** para probar como
+queda separado el sistema.estan explicadas justo despues.
 
 ### Cargar ventas de ejemplo (opcional)
 
@@ -301,21 +306,44 @@ Crea ventas de los ultimos 30 dias y deja pedidos pendientes en cocina.
 C:\xampp\php\php.exe api/pruebas.php
 ```
 
-Verifica 142 casos: autenticacion, permisos, CRUD, stock, transferencias y
-ventas. Se limpian solas al terminar, asi que se pueden repetir.
+Verifica 148 casos: autenticacion, permisos, CRUD, stock, transferencias,
+ventas y la separacion de caja/cocina. Se limpian solas al terminar, asi que
+se pueden repetir.
 
 ---
 
-## Roles incluidos
+## Las tres cuentas y a que modulo entran
 
-| Rol | Puede hacer |
-|---|---|
-| Administrador | Todo |
-| Supervisor | Ver, crear, editar, borrar y registrar movimientos |
-| Operador | Ver, crear, editar y registrar movimientos |
-| Vendedor | Ver y crear (caja) |
-| Cocina | Ver y crear (mover pedidos) |
-| Consulta | Solo ver |
+La base de datos viene con **tres usuarios separados**, uno por trabajo.
+Cada uno entra por su modulo y **no ve lo que no le corresponde**:
+
+| Correo | Clave | Ve el menu | **NO** puede |
+|---|---|---|---|
+| `admin@inventario.com` | `Admin123!` | Todo: Resumen, Caja, Cocina, Inventario, Movimientos, Transferencias, Almacenes, Categorias, Usuarios | — |
+| `caja@inventario.com` | `Caja123!` | **Caja** e Inventario | Ver el Resumen con las cifras, ver el historial de ventas, entrar a Cocina, gestionar usuarios |
+| `cocina@inventario.com` | `Cocina123!` | **Cocina** e Inventario | Ver cifras o historial de ventas, cobrar, entrar a Caja |
+
+La separacion va en dos capas, no solo en el menu:
+
+- **El menu** esconde lo que no te toca. Si abres a mano una seccion que no
+  te corresponde, la app te manda sola a la primera que si puedes usar.
+- **El API lo rechaza con 403.** Aunque alguien escriba la direccion a mano,
+  el servidor no le devuelve los datos.
+
+Asi, por ejemplo, el de cocina **no puede registrar una venta** ni aunque
+intente hacerlo directamente contra el API, porque esa accion exige a la vez
+el permiso de *crear* y el de *Caja*.
+
+### Para darle una cuenta nueva a un empleado
+
+En **Usuarios → Crear usuario**, elige el rol que corresponde a su trabajo
+(`Vendedor` para quien cobra, `Cocina` para quien cocina). Los permisos de
+cada rol estan documentados en
+[`api/README-permisos.md`](api/README-permisos.md).
+
+> **Cambia las tres claves** de ejemplo cuando crees la base de datos: la de
+> `Admin123!` esta escrita en el README, asi que cualquiera que lo lea la
+> sabe. Menu **Usuarios → editar → nueva contrasena**.
 
 ---
 
@@ -326,7 +354,8 @@ api/                 API PHP (un archivo por recurso)
   auth/              login.php, logout.php, yo.php
   nucleo.php         Base comun: conexion, sesiones, permisos, helpers
   config.php         Conexion a la base de datos (SIN secretos)
-  pruebas.php        Suite de 142 pruebas automaticas
+  pruebas.php        Suite de 148 pruebas automaticas
+  README-permisos.md Que permiso exige cada endpoint
   semilla_ventas.php Genera ventas de ejemplo
 sql/
   inventario_db.sql  Esquema + datos de ejemplo

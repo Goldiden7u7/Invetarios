@@ -38,7 +38,9 @@ if (PHP_SAPI !== 'cli') {
     switch ($metodo) {
         case 'GET':  listarVentas();  break;
         case 'POST':
-            $usuario = exigir_permiso(2, 'registrar ventas');
+            // Dos permisos: poder crear (2) y estar en el modulo Caja (256).
+            // Asi el de cocina, aunque sepa crear, no puede cobrar.
+            $usuario = exigir_permiso(2 | 256, 'registrar ventas desde la caja');
             $respuesta = crear_venta($usuario, cuerpo());
             responder(201, $respuesta);
             break;
@@ -51,7 +53,7 @@ if (PHP_SAPI !== 'cli') {
 
 function listarVentas()
 {
-    exigir_permiso(1, 'ver ventas');
+    exigir_permiso(128, 'ver el historial de ventas');
 
     $id = entero($_GET['id'] ?? 0);
 

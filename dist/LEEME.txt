@@ -24,10 +24,15 @@ PASO 3 - Entrar
 ---------------
 Abre  http://127.0.0.1:8080
 
-    Correo:      admin@inventario.com
-    Contrasena:  Admin123!
+    Administrador   admin@inventario.com    Admin123!
+    Caja            caja@inventario.com     Caja123!
+    Cocina          cocina@inventario.com   Cocina123!
 
-CAMBIA ESA CONTRASENA apenas entres (menu Usuarios).
+Cada usuario entra solo a su modulo: el de caja cobra pero NO ve las
+cifras de ventas, y el de cocina prepara pedidos pero NO puede cobrar.
+El administrador ve todo.
+
+CAMBIA LAS TRES CONTRASENAS apenas entres (menu Usuarios).
 
 NOTA - Si tu MySQL no es el de XAMPP
 ------------------------------------
@@ -45,7 +50,7 @@ Con el servidor del paso 2 corriendo, abre:
 
     http://127.0.0.1:8080/pruebas.php
 
-Debe decir "142 correctas, 0 fallidas".
+Debe decir "148 correctas, 0 fallidas".
 
 VENTAS DE EJEMPLO
 -----------------

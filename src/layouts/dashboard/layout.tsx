@@ -1,11 +1,14 @@
 import type { Breakpoint } from '@mui/material/styles';
 
 import { merge } from 'es-toolkit';
+import { useMemo, useEffect } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 import { useBoolean } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
+
+import { useRouter, usePathname } from 'src/routes/hooks';
 
 import { useAuth } from 'src/auth';
 
@@ -49,11 +52,27 @@ export function DashboardLayout({
 
   const { usuario } = useAuth();
 
+  const pathname = usePathname();
+  const router = useRouter();
+
   const { value: open, onFalse: onClose, onTrue: onOpen } = useBoolean();
 
   // El menu se arma segun los permisos del usuario: un Consultor no ve
-  // Usuarios ni Almacenes. El API lo comprobara igual en cada llamada.
-  const menu = navVisible(usuario?.permisos ?? 0);
+  // Usuarios ni Almacenes, y un cajero no ve el Resumen ni la Cocina.
+  // El API lo comprobara igual en cada llamada.
+  const permisos = usuario?.permisos ?? 0;
+  const menu = useMemo(() => navVisible(permisos), [permisos]);
+
+  // Cada quien entra por su modulo. Si alguien abre a mano una seccion que
+  // no le toca (por ejemplo "/" con un usuario de Caja), lo redirigimos a la
+  // primera que si puede usar, en vez de dejarle una pantalla vacia.
+  useEffect(() => {
+    if (menu.length === 0 || menu.some((item) => item.path === pathname)) {
+      return;
+    }
+
+    router.replace(menu[0].path);
+  }, [menu, pathname, router]);
 
   const renderHeader = () => {
     const headerSlotProps: HeaderSectionProps['slotProps'] = {

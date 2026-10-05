@@ -721,7 +721,39 @@ $r = pedir('/movimientos.php', 'POST', ['producto_id' => $prod_ven, 'almacen_id'
 verificar('Vendedor NO mueve inventario (403)', $r['codigo'] === 403);
 
 $r = pedir('/pedidos.php');
-verificar('Vendedor SI ve la cocina (200)', $r['codigo'] === 200);
+verificar('Vendedor NO ve la cocina (403)', $r['codigo'] === 403);
+
+$r = pedir('/dashboard.php');
+verificar('Vendedor NO ve las cifras de ventas (403)', $r['codigo'] === 403);
+
+$r = pedir('/ventas.php');
+verificar('Vendedor NO ve el historial de ventas (403)', $r['codigo'] === 403);
+
+// El rol Cocina es el espejo: mueve pedidos, pero no cobra ni ve cifras.
+// Volvemos a la sesion de admin porque crear usuarios exige bit 32.
+$cookie = $cookie_admin;
+
+$email_coc = 'cocina' . rand(1000, 9999) . '@inventario.com';
+$r = pedir('/usuarios.php', 'POST', [
+    'nombre' => 'Cocina de prueba', 'email' => $email_coc,
+    'password' => 'Cocina123', 'rol_id' => 6,
+]);
+verificar('Crea usuario con rol de cocina', $r['codigo'] === 201);
+
+$cookie = null;
+pedir('/auth/login.php', 'POST', ['email' => $email_coc, 'password' => 'Cocina123']);
+
+$r = pedir('/pedidos.php');
+verificar('Cocina SI ve la cola de cocina (200)', $r['codigo'] === 200);
+
+$r = pedir('/dashboard.php');
+verificar('Cocina NO ve las cifras de ventas (403)', $r['codigo'] === 403);
+
+$r = pedir('/ventas.php', 'POST', [
+    'almacen_id' => 1,
+    'items' => [['combo_id' => $combo_ven, 'cantidad' => 1]],
+]);
+verificar('Cocina NO puede cobrar, aunque sepa crear (403)', $r['codigo'] === 403);
 
 // El rol Consulta solo observa
 $r = pedir('/auth/login.php', 'POST', ['email' => $email_test, 'password' => 'Prueba123']);

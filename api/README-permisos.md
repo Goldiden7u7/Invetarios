@@ -13,12 +13,27 @@ Los bits se **suman** en la columna `permisos` de la tabla `roles`:
 | Bit | Constante (frontend) | Permiso                     |
 | --- | -------------------- | --------------------------- |
 | 1   | `PERMISO.ver`        | Ver / consultar             |
-| 2   | `PERMISO.crear`      | Crear — y **cobrar ventas** |
+| 2   | `PERMISO.crear`      | Crear                       |
 | 4   | `PERMISO.editar`     | Editar                      |
 | 8   | `PERMISO.eliminar`   | Eliminar / desactivar       |
 | 16  | `PERMISO.movimientos`| Movimientos y transferencias |
 | 32  | `PERMISO.usuarios`   | Gestionar cuentas y roles   |
 | 64  | `PERMISO.config`     | Configuración general       |
+
+### Los bits de módulo
+
+Los siete de arriba dicen **qué** puede hacer una persona. Estos tres dicen
+**dónde** la deja entrar, y son los que separan los trabajos del día a día:
+
+| Bit | Constante (frontend) | Módulo                       |
+| --- | -------------------- | ---------------------------- |
+| 128 | `PERMISO.ventas`     | **Resumen** — cifras e historial de ventas |
+| 256 | `PERMISO.caja`       | **Caja** — cobrar una venta   |
+| 512 | `PERMISO.cocina`     | **Cocina** — ver y mover pedidos |
+
+Así el que cobra no ve en qué factura el negocio, y el de cocina no puede
+cobrar aunque sepa crear. Como son flags de bits, se pueden exigir varios a
+la vez: `exigir_permiso(2 | 256, 'cobrar')` pide **crear** *y* **caja**.
 
 ---
 
@@ -26,23 +41,25 @@ Los bits se **suman** en la columna `permisos` de la tabla `roles`:
 
 | Archivo          | GET (ver) | POST (crear / acción)     | PUT (editar) | DELETE (eliminar) |
 | ---------------- | --------- | ------------------------- | ------------ | ----------------- |
-| `dashboard.php`  | 1         | —                         | —            | —                 |
+| `dashboard.php`  | **128**   | —                         | —            | —                 |
 | `productos.php`  | 1         | 2                         | 4            | 8                 |
 | `categorias.php` | 1         | 2                         | 4            | 8                 |
 | `almacenes.php`  | 1         | 2                         | 4            | 8                 |
 | `combos.php`     | 1         | 4                         | 4            | 8                 |
 | `movimientos.php`| 1         | 16                        | —            | —                 |
 | `transferencias.php` | 1     | 16 (enviar **y** recibir/cancelar) | — | —       |
-| `pedidos.php`    | 1         | 2 (avanzar estado)        | —            | —                 |
-| `ventas.php`     | 1         | 2 (cobrar)                | —            | —                 |
+| `pedidos.php`    | 1 \| **512** | 2 \| **512** (avanzar) | —            | —                 |
+| `ventas.php`     | **128**   | 2 \| **256** (cobrar)     | —            | —                 |
 | `usuarios.php`   | 32        | 32                        | 32           | 32                |
 
 Notas:
 
-- **`ventas.php` y `pedidos.php`**: cualquiera con bit 2 puede cobrar y
-  avanzar pedidos. El rol **Vendedor** (3 = ver + crear) y **Cocina** (3)
-  pueden hacer ambas cosas; si quisieras que Cocina *no* cobre, crea un rol
-  con permisos 1+2 y solo dale acceso a la pantalla Cocina en el frontend.
+- **`dashboard.php`**: pide el bit 128, no el 1. El Resumen *son* las cifras
+  de ventas, así que solo entra quien tenga ese módulo habilitado.
+- **`ventas.php`**: el GET (historial) pide 128, y el POST (cobrar) pide
+  `crear` **y** `caja`. Con esto el rol Cocina puede ver la cola pero no
+  puede registrar una venta ni aunque escriba la URL a mano.
+- **`pedidos.php`**: tanto el GET como el POST piden el bit 512 de cocina.
 - **`usuarios.php`**: todo el bloque exige bit 32 (solo Administradores por
   defecto).
 - **`combos.php`**: crear y editar exigen bit 4 (no 2), porque son tareas de
@@ -52,14 +69,26 @@ Notas:
 
 ## Roles incluidos en el SQL
 
-| Rol          | Permisos | Suma | Puede…                                          |
-| ------------ | -------- | ---- | ----------------------------------------------- |
-| Administrador| 1+2+4+8+16+32+64 | 127 | Todo.                                   |
-| Supervisor   | 1+2+4+8+16 | 31  | Opera inventario, transferencias y reportes.    |
-| Operador     | 1+2+16     | 19  | Registra movimientos, ayuda en caja.            |
-| Consulta     | 1         | 1    | Solo lectura.                                   |
-| Vendedor     | 1+2       | 3    | Caja (cobra) y ve pedidos de cocina.            |
-| Cocina       | 1+2       | 3    | Ve la cola de cocina y avanza los pedidos.      |
+| Rol          | Bits                                              | Suma | Puede…                                       |
+| ------------ | ------------------------------------------------- | ---- | -------------------------------------------- |
+| Administrador| 1+2+4+8+16+32+64 + 128+256+512                   | 1023 | Todo.                                        |
+| Supervisor   | 1+2+4+8+16 + 128+512                              | 671  | Inventario, transferencias, ventas y cocina. |
+| Operador     | 1+2+16 + 128+256+512                              | 915  | Inventario y caja, sin borrar nada.         |
+| Consulta     | 1 + 128+256+512                                   | 897  | Solo lectura, en todo.                      |
+| Vendedor     | 1+2 + 256                                         | 259  | **Solo la Caja.** Cobra, no ve cifras de ventas. |
+| Cocina       | 1+2 + 512                                         | 515  | **Solo Cocina.** Ve y avanza pedidos, no cobra ni ve ventas. |
 
 > El `password_hash` se genera con `password_hash()` de PHP (bcrypt); en la
 > base **nunca** se guarda texto plano.
+
+## Usuarios de ejemplo
+
+| Correo                 | Rol           | Contraseña   |
+| ---------------------- | ------------- | ------------ |
+| `admin@inventario.com` | Administrador | `Admin123!`  |
+| `caja@inventario.com`  | Vendedor      | `Caja123!`   |
+| `cocina@inventario.com`| Cocina        | `Cocina123!` |
+
+Cada uno entra por su módulo solo: el cajero aterriza en Caja, el de cocina
+en Cocina, y ninguno ve el Resumen. **Cambia las tres contraseñas al crear
+la base de datos.**

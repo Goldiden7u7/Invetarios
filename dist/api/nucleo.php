@@ -215,8 +215,17 @@ function exigir_sesion()
 
 /**
  * Exige un permiso especifico.
- * Los permisos son flags de bits: ver=1, crear=2, editar=4,
- * eliminar=8, movimientos=16, usuarios=32, config=64
+ * Los permisos son flags de bits, asi que se pueden exigir varios a la vez
+ * pasando el resultado de un "or": exigir_permiso(2 | 256, 'cobrar').
+ *
+ *   ver=1, crear=2, editar=4, eliminar=8, movimientos=16, usuarios=32,
+ *   config=64
+ *
+ * Los tres ultimos bits no dicen QUE haces, sino DONDE te dejan entrar:
+ *
+ *   ventas=128  ver el Resumen con las cifras y el historial de ventas
+ *   caja=256    abrir la Caja y registrar ventas
+ *   cocina=512  abrir la pantalla de Cocina y mover pedidos
  */
 function exigir_permiso($bit, $nombre)
 {

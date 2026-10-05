@@ -6,11 +6,15 @@
  * GET /api/dashboard.php?tipo=graficas -> solo las series de las graficas
  *
  * Alimenta las tarjetas de resumen y las graficas de la pantalla principal.
+ *
+ * Permiso: 128 (ventas). Solo el administrador y el supervisor ven estas
+ * cifras. Quien cobra o cocina entra directo a su modulo y nunca pasa por
+ * aqui, aunque escriba la direccion a mano.
  */
 
 require_once __DIR__ . '/nucleo.php';
 
-$usuario = exigir_permiso(1, 'ver el dashboard');
+$usuario = exigir_permiso(128, 'ver el resumen de ventas');
 $tipo = (string) ($_GET['tipo'] ?? 'todo');
 
 if ($tipo === 'graficas') {

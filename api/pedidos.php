@@ -13,7 +13,9 @@
  * La cocina ve los items y los ingredientes que pidio el cliente (incluye
  * lo que pidio "sin" y los extra que agrego).
  *
- * Permisos: ver = 1 (Cocina/Vendedor/Admin); avanzar estado = crear (2).
+ * Permisos: ver cola = 1; mover un pedido = 2. En ambos hace falta ademas
+ *           el bit de modulo Cocina (512), para que solo quien trabaja en
+ *           cocina vea la cola y la mueva.
  */
 
 require_once __DIR__ . '/nucleo.php';
@@ -31,7 +33,7 @@ switch ($metodo) {
 
 function listarPedidos()
 {
-    exigir_permiso(1, 'ver pedidos de cocina');
+    exigir_permiso(1 | 512, 'ver la cola de cocina');
 
     $id = entero($_GET['id'] ?? 0);
 
@@ -128,7 +130,7 @@ function itemsDelPedido($venta_id)
 
 function cambiarEstado()
 {
-    exigir_permiso(2, 'avanzar pedidos');
+    exigir_permiso(2 | 512, 'avanzar pedidos de cocina');
 
     $id = entero(entrada('id'));
     $nuevo = (string) entrada('estado', '');

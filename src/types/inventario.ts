@@ -23,6 +23,20 @@ export const PERMISO = {
   movimientos: 16,
   usuarios: 32,
   config: 64,
+  /**
+   * Los tres bits de arriba dicen QUE puedes hacer (crear, editar...).
+   * Estos tres dicen DONDE: en que modulos de la app te dejan entrar.
+   *
+   * Son los que separan los distintos trabajos del dia a dia, para que el
+   * que cobra no vea las ventas y el de cocina no pueda cobrar:
+   *
+   *   ventas  -> ver el Resumen (dashboard) con las cifras y el historial
+   *   caja    -> abrir la Caja y registrar ventas
+   *   cocina  -> abrir la pantalla de Cocina y mover pedidos
+   */
+  ventas: 128,
+  caja: 256,
+  cocina: 512,
 } as const;
 
 /** Comprueba si el usuario tiene TODOS los bits indicados. */

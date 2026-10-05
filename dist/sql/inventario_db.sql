@@ -32,6 +32,7 @@ CREATE TABLE `roles` (
   `descripcion`   VARCHAR(150) NULL,
   -- Permisos como flags de bits (bitwise). Ver src/api/README-permisos.md
   -- 1=ver 2=crear 4=editar 8=eliminar 16=movimientos 32=usuarios 64=config
+  -- 128=ventas 256=caja 512=cocina  (a que modulo puede entrar)
   `permisos`      INT UNSIGNED NOT NULL DEFAULT 1,
   `activo`        TINYINT(1)   NOT NULL DEFAULT 1,
   `creado_en`     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -476,13 +477,30 @@ GROUP BY p.id, p.codigo, p.nombre, p.unidad_medida, p.stock_minimo, p.perecedero
 
 -- Roles. Permisos bitwise: 1=ver 2=crear 4=editar 8=eliminar
 --                          16=movimientos 32=usuarios 64=config
+--                          128=ventas 256=caja 512=cocina
+--
+-- Los tres ultimos bits separan los trabajos: quien cobra no ve las cifras
+-- de ventas y quien cocina no puede cobrar.
+--
+--   Administrador 127  = 1+2+4+8+16+32+64
+--                      | 128+256+512          -> 1023 (entra a todo)
+--   Supervisor    31   = 1+2+4+8
+--                      | 128+512              ->  671 (ve ventas y cocina)
+--   Operador      19   = 1+2+4
+--                      | 128+256+512          ->  915 (inventario y caja)
+--   Consulta       1   = 1
+--                      | 128+256+512          ->  897 (solo mira, en todo)
+--   Vendedor       3   = 1+2
+--                      | 256                  ->  259 (solo la Caja)
+--   Cocina         3   = 1+2
+--                      | 512                  ->  515 (solo Cocina)
 INSERT INTO `roles` (`id`, `nombre`, `descripcion`, `permisos`) VALUES
-  (1, 'Administrador', 'Control total del sistema',       127),
-  (2, 'Supervisor',    'Opera inventarios y ve reportes',  31),
-  (3, 'Operador',      'Registra entradas y salidas',      19),
-  (4, 'Consulta',      'Solo puede ver',                    1),
-  (5, 'Vendedor',      'Atiende la caja y registra ventas', 3),
-  (6, 'Cocina',        'Ve los pedidos y los prepara',       3);
+  (1, 'Administrador', 'Control total del sistema',        1023),
+  (2, 'Supervisor',    'Opera inventarios y ve reportes',   671),
+  (3, 'Operador',      'Registra entradas y salidas',       915),
+  (4, 'Consulta',      'Solo puede ver',                    897),
+  (5, 'Vendedor',      'Atiende la caja y registra ventas',  259),
+  (6, 'Cocina',        'Ve los pedidos y los prepara',       515);
 
 -- Categorias de cafeteria
 INSERT INTO `categorias` (`id`, `nombre`, `descripcion`) VALUES
@@ -617,17 +635,24 @@ INSERT INTO `combo_opcionales` (`combo_id`, `producto_id`, `cantidad`, `precio_e
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ======================================================================
---  USUARIO INICIAL
+--  USUARIOS INICIALES
 --
---  Cuenta de administrador para el primer ingreso.
---    Correo: admin@inventario.com    Clave: Admin123!
+--  Tres cuentas separadas, una por trabajo. Cada una entra solo a su
+--  modulo: el administrador ve todas las cifras, el cajero solo cobra y
+--  el de cocina solo prepara pedidos.
 --
---  >>> CAMBIA ESTA CLAVE DESPUES DEL PRIMER INGRESO <<<
---  (menu Usuarios -> editar tu cuenta -> nueva contrasena)
+--    admin@inventario.com   Administrador   Admin123!
+--    caja@inventario.com    Vendedor        Caja123!
+--    cocina@inventario.com  Cocina          Cocina123!
+--
+--  >>> CAMBIA LAS TRES CLAVES DESPUES DEL PRIMER INGRESO <<<
+--  (menu Usuarios -> editar la cuenta -> nueva contrasena)
 -- ======================================================================
 
 INSERT INTO `usuarios` (`nombre`, `email`, `password_hash`, `rol_id`, `telefono`, `activo`) VALUES
-  ('Administrador', 'admin@inventario.com', '$2y$10$qgIY.TJ8Pf23bKZklIqZf.jnHtxhhd4tM/m7bmH8dtoonls8zX0C6', 1, NULL, 1);
+  ('Administrador', 'admin@inventario.com', '$2y$10$qgIY.TJ8Pf23bKZklIqZf.jnHtxhhd4tM/m7bmH8dtoonls8zX0C6', 1, NULL, 1),
+  ('Caja',          'caja@inventario.com',  '$2y$10$LiBcewgL69TjyTarQyTare9.nDsMg6340qCOS5NuOm.9m2b01PGXK', 5, NULL, 1),
+  ('Cocina',        'cocina@inventario.com','$2y$10$6y0YEqP64F.CXpWGz9TZGeskWr7V5cIOS9Aj1Rt942RbdCdhqt.lm', 6, NULL, 1);
 
 -- Datos de ventas de ejemplo (opcional):  php api/semilla_ventas.php
 -- Ver manual: MANUEL_INSTALACION.md
