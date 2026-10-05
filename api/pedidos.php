@@ -33,7 +33,9 @@ switch ($metodo) {
 
 function listarPedidos()
 {
-    exigir_permiso(1 | 512, 'ver la cola de cocina');
+    // Solo el modulo Cocina. El administrador mira las cifras de ventas pero
+    // no se asoma a la cola de pedidos, asi que el bit de cocina va solo.
+    exigir_permiso(512, 'ver la cola de cocina');
 
     $id = entero($_GET['id'] ?? 0);
 

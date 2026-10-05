@@ -562,6 +562,21 @@ $r = pedir('/combos.php', 'POST', [
 verificar('Crea combo dedicado para caja', $r['codigo'] === 201);
 $combo_ven = $r['json']['datos']['id'] ?? 0;
 
+// A partir de aqui las pruebas de venta ya NO las hace el administrador:
+// el dueño administra el catalogo y mira las cifras, pero no cobra ni
+// cocina. Usamos un Operador, que si tiene los tres bits de modulo
+// (ventas, caja y cocina), y asi tambien cubre la seccion 10 de pedidos.
+$email_ope = 'operador' . rand(1000, 9999) . '@inventario.com';
+$r = pedir('/usuarios.php', 'POST', [
+    'nombre' => 'Operador de prueba', 'email' => $email_ope,
+    'password' => 'Opera123', 'rol_id' => 3,
+]);
+verificar('Crea operador de prueba para los cobros', $r['codigo'] === 201);
+$operador_id = $r['json']['datos']['id'] ?? 0;
+
+$cookie = null;
+pedir('/auth/login.php', 'POST', ['email' => $email_ope, 'password' => 'Opera123']);
+
 // Venta A: 2 unidades + 1 extra por unidad (consume 6; subtotal 32; costo 3/udx2 = 6; ganancia 26)
 $r = pedir('/ventas.php', 'POST', [
     'almacen_id' => 1,
@@ -696,6 +711,10 @@ verificar('No salta de pendiente a entregado (400)', $r['codigo'] === 400);
 
 seccion('11. PERMISOS CAJA/COCINA');
 
+// Volvemos a la sesion de admin: las secciones 9 y 10 corrieron con el
+// Operador, y crear usuarios exige el bit 32, que el Operador no tiene.
+$cookie = $cookie_admin;
+
 $email_vend = 'vendedor' . rand(1000, 9999) . '@inventario.com';
 $r = pedir('/usuarios.php', 'POST', [
     'nombre' => 'Vendedor de prueba', 'email' => $email_vend,
@@ -704,7 +723,6 @@ $r = pedir('/usuarios.php', 'POST', [
 verificar('Crea vendedor con rol de caja', $r['codigo'] === 201);
 $vendedor_id = $r['json']['datos']['id'] ?? 0;
 
-$cookie_admin = $cookie;
 $cookie = null;
 pedir('/auth/login.php', 'POST', ['email' => $email_vend, 'password' => 'Vende123']);
 
@@ -739,6 +757,7 @@ $r = pedir('/usuarios.php', 'POST', [
     'password' => 'Cocina123', 'rol_id' => 6,
 ]);
 verificar('Crea usuario con rol de cocina', $r['codigo'] === 201);
+$cocina_id = $r['json']['datos']['id'] ?? 0;
 
 $cookie = null;
 pedir('/auth/login.php', 'POST', ['email' => $email_coc, 'password' => 'Cocina123']);
@@ -755,6 +774,9 @@ $r = pedir('/ventas.php', 'POST', [
 ]);
 verificar('Cocina NO puede cobrar, aunque sepa crear (403)', $r['codigo'] === 403);
 
+$r = pedir('/movimientos.php?vista=caja');
+verificar('Cocina NO ve el dinero de la caja (403)', $r['codigo'] === 403);
+
 // El rol Consulta solo observa
 $r = pedir('/auth/login.php', 'POST', ['email' => $email_test, 'password' => 'Prueba123']);
 $r = pedir('/ventas.php');
@@ -768,7 +790,60 @@ $cookie = $cookie_admin;
 
 // ----------------------------------------------------------------------
 
-seccion('12. DASHBOARD');
+seccion('12. ADMINISTRADOR: CIFRAS, CAJA Y COCINA');
+
+// El dueno administra el catalogo y mira los numeros, pero no trabaja ni en
+// la caja ni en la cocina: esos dos modulos se los quitamos del rol.
+$r = pedir('/dashboard.php');
+verificar('Admin SI ve las cifras de ventas (200)', $r['codigo'] === 200);
+
+$r = pedir('/ventas.php');
+verificar('Admin SI ve el historial de ventas (200)', $r['codigo'] === 200);
+
+$r = pedir('/movimientos.php');
+verificar('Admin SI ve los movimientos de stock (200)', $r['codigo'] === 200 && isset($r['json']['datos']['movimientos']));
+
+$r = pedir('/ventas.php', 'POST', [
+    'almacen_id' => 1,
+    'items' => [['combo_id' => $combo_ven, 'cantidad' => 1]],
+]);
+verificar('Admin NO puede cobrar (403)', $r['codigo'] === 403);
+
+$r = pedir('/pedidos.php');
+verificar('Admin NO ve la cola de cocina (403)', $r['codigo'] === 403);
+
+$r = pedir('/pedidos.php', 'POST', ['id' => 1, 'estado' => 'listo']);
+verificar('Admin NO avanza pedidos (403)', $r['codigo'] === 403);
+
+// --- La segunda pestana de Movimientos: el dinero de cada venta ------------
+
+$r = pedir('/movimientos.php?vista=caja');
+verificar('Admin SI ve los ingresos de caja (200)', $r['codigo'] === 200);
+verificar('Los ingresos de caja traen la lista de ventas', isset($r['json']['datos']['ingresos']));
+verificar('Los ingresos de caja traen el resumen de hoy y del mes',
+    isset($r['json']['datos']['resumen']['hoy'], $r['json']['datos']['resumen']['mes']));
+verificar('Los ingresos de caja se reparten por metodo de pago',
+    isset($r['json']['datos']['resumen']['por_metodo']));
+
+$filas_caja = $r['json']['datos']['ingresos'] ?? [];
+verificar('Cada ingreso trae cajero, metodo de pago y ganancia',
+    !empty($filas_caja)
+    && isset($filas_caja[0]['cajero'], $filas_caja[0]['metodo_pago'], $filas_caja[0]['ganancia']));
+
+$total_hoy = (float) ($r['json']['datos']['resumen']['hoy']['total'] ?? 0);
+verificar('El total de hoy cuadra con la suma de las ventas de hoy',
+    abs($total_hoy - (float) consultar_uno("SELECT COALESCE(SUM(total),0) AS t FROM ventas
+        WHERE estado = 'completada' AND DATE(creado_en) = CURDATE()")['t']) < 0.01);
+
+$r = pedir('/movimientos.php?vista=caja&metodo_pago=efectivo');
+verificar('El filtro por metodo de pago funciona',
+    $r['codigo'] === 200
+    && count(array_filter($r['json']['datos']['ingresos'] ?? [],
+        fn($f) => $f['metodo_pago'] !== 'efectivo')) === 0);
+
+// ----------------------------------------------------------------------
+
+seccion('13. DASHBOARD');
 
 $r = pedir('/dashboard.php');
 verificar('Dashboard responde', $r['codigo'] === 200);
@@ -790,7 +865,7 @@ verificar('Top de productos mas consumidos', isset($r['json']['datos']['graficas
 
 // ----------------------------------------------------------------------
 
-seccion('13. LIMPIEZA');
+seccion('14. LIMPIEZA');
 
 $r = pedir('/productos.php?por_pagina=100');
 verificar('El sistema responde al final de las pruebas', $r['codigo'] === 200);
@@ -798,7 +873,7 @@ verificar('El sistema responde al final de las pruebas', $r['codigo'] === 200);
 // Limpieza final del producto, almacen, combos y usuarios de prueba.
 // El DELETE por API no basta: el producto tiene movimientos, asi que la API
 // lo desactiva en vez de borrarlo. Purga directa para no dejar basura.
-limpiar_rastros($nuevo_id, $alm_id, [$user_id, $vendedor_id], $cat_prueba_id);
+limpiar_rastros($nuevo_id, $alm_id, [$user_id, $vendedor_id, $operador_id, $cocina_id], $cat_prueba_id);
 
 // Comprobamos que la base quedo limpia y el catalogo real intacto.
 // Miramos estado=todos: un producto de prueba desactivado tampoco puede
@@ -824,7 +899,7 @@ verificar('El usuario de prueba fue eliminado', !in_array($user_id, array_column
 // limpiar_rastros() borra solo los rastros de los datos de prueba; las
 // acciones del admin (logins) se quedan, que es justo lo que auditamos.
 
-seccion('14. INTEGRIDAD DE LAS RESPUESTAS');
+seccion('15. INTEGRIDAD DE LAS RESPUESTAS');
 
 // Un warning de PHP impreso dentro del cuerpo rompe el fetch() del navegador
 // sin avisar nada. Lo comprobamos aqui para que nunca pase desapercibido.

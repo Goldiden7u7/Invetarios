@@ -3,6 +3,8 @@
  * API DE MOVIMIENTOS DE INVENTARIO
  * -----------------------------------------------------------------
  * GET    /api/movimientos.php                  -> lista con filtros
+ *        ?vista=stock (default)  movimientos de inventario (entradas/salidas)
+ *        ?vista=caja             ingresos de caja: el dinero de cada venta
  * POST   /api/movimientos.php                  -> registrar movimiento
  *        Body: { producto_id, almacen_id, tipo, cantidad, referencia, notas }
  *        tipo: entrada | salida | ajuste
@@ -23,6 +25,13 @@
  *     usuarios que entran al mismo tiempo no calculen mal.
  *   - Nunca deja el stock en negativo.
  *   - Deja constancia en la tabla de movimientos SIEMPRE.
+ *
+ * LA VISTA "CAJA" (GET ?vista=caja):
+ *   Adentro de esta misma pantalla hay una segunda seleccion llamada Caja,
+ *   que NO es de inventario sino de dinero. Muestra venta por venta cuanto
+ *   entro a la caja, quien cobro, con que metodo de pago y cuanto ganamos.
+ *   Por eso pide el permiso de ventas (128) y no el de movimientos: las
+ *   cifras del negocio son del administrador, no del que mueve mercaderia.
  */
 
 require_once __DIR__ . '/nucleo.php';
@@ -30,7 +39,12 @@ require_once __DIR__ . '/nucleo.php';
 $metodo = $_SERVER['REQUEST_METHOD'];
 
 switch ($metodo) {
-    case 'GET':  listarMovimientos();  break;
+    case 'GET':
+        ((string) ($_GET['vista'] ?? '')) === 'caja'
+            ? listarIngresosCaja()
+            : listarMovimientos();
+        break;
+
     case 'POST': registrarMovimiento(); break;
     default:
         error(405, 'Metodo no permitido');
@@ -112,6 +126,132 @@ function listarMovimientos()
             'total_entradas'     => (int) ($resumen['total_entradas'] ?? 0),
             'total_salidas'      => (int) ($resumen['total_salidas'] ?? 0),
             'total_movimientos'  => (int) ($resumen['total_movimientos'] ?? 0),
+        ],
+        'paginacion' => [
+            'pagina' => $pagina,
+            'por_pagina' => $por_pagina,
+            'total' => $total,
+            'total_paginas' => (int) ceil($total / $por_pagina),
+        ],
+    ]);
+}
+
+// ----------------------------------------------------------------------
+//  LISTAR INGRESOS DE CAJA  ( ?vista=caja )
+// ----------------------------------------------------------------------
+//
+//  A diferencia de listarMovimientos(), aqui no se toca el stock: se leen
+//  las ventas ya cerradas para decir cuanto dinero entro a la caja. Cada
+//  fila es una venta con su metodo de pago y su ganancia real.
+//
+//  Los tres bloques del resumen son lo que un dueño mira primero:
+//  cuanto entro hoy, cuanto lleva el mes y como se reparte el dinero.
+// ----------------------------------------------------------------------
+
+function listarIngresosCaja()
+{
+    exigir_permiso(128, 'ver los ingresos de caja');
+
+    $desde      = (string) ($_GET['desde'] ?? '');
+    $hasta      = (string) ($_GET['hasta'] ?? '');
+    $metodo     = (string) ($_GET['metodo_pago'] ?? '');
+    $cajero_id  = entero($_GET['cajero_id'] ?? 0);
+    $pagina     = max(1, entero($_GET['pagina'] ?? 1, 1));
+    $por_pagina = min(200, max(10, entero($_GET['por_pagina'] ?? 50, 50)));
+
+    $donde = ["v.estado = 'completada'"];
+    $params = [];
+
+    if ($cajero_id > 0) { $donde[] = 'v.usuario_id = ?'; $params[] = $cajero_id; }
+    if (in_array($metodo, ['efectivo', 'tarjeta', 'transferencia', 'otro'], true)) {
+        $donde[] = 'v.metodo_pago = ?';
+        $params[] = $metodo;
+    }
+    if ($desde !== '') { $donde[] = 'v.creado_en >= ?'; $params[] = $desde . ' 00:00:00'; }
+    if ($hasta !== '') { $donde[] = 'v.creado_en <= ?'; $params[] = $hasta . ' 23:59:59'; }
+
+    $filtro = 'WHERE ' . implode(' AND ', $donde);
+
+    $total  = consultar_uno("SELECT COUNT(*) AS n FROM ventas v $filtro", $params);
+    $total  = (int) $total['n'];
+    $offset = ($pagina - 1) * $por_pagina;
+
+    $filas = consultar(
+        "SELECT v.id, v.codigo, v.cliente_nombre, v.metodo_pago, v.subtotal, v.descuento,
+                v.total, v.costo_total, v.creado_en,
+                u.nombre AS cajero,
+                (v.subtotal - v.costo_total) AS ganancia
+         FROM ventas v
+         INNER JOIN usuarios u ON u.id = v.usuario_id
+         $filtro
+         ORDER BY v.creado_en DESC, v.id DESC
+         LIMIT $por_pagina OFFSET $offset",
+        $params
+    );
+
+    foreach ($filas as &$f) {
+        $f['id'] = (int) $f['id'];
+        $f['subtotal'] = (float) $f['subtotal'];
+        $f['descuento'] = (float) $f['descuento'];
+        $f['total'] = (float) $f['total'];
+        $f['costo_total'] = (float) $f['costo_total'];
+        $f['ganancia'] = (float) $f['ganancia'];
+    }
+    unset($f);
+
+    // --- Cuanto entro HOY (con el mismo filtro de la lista) -------------
+    $hoy = consultar_uno(
+        "SELECT COUNT(*) AS ventas, COALESCE(SUM(v.total),0) AS total,
+                COALESCE(SUM(v.subtotal - v.costo_total),0) AS ganancia,
+                COALESCE(SUM(CASE WHEN v.metodo_pago = 'efectivo' THEN v.total ELSE 0 END),0) AS efectivo
+         FROM ventas v $filtro
+         AND DATE(v.creado_en) = CURDATE()",
+        $params
+    );
+
+    // --- Cuanto lleva el MES ---------------------------------------------
+    $mes = consultar_uno(
+        "SELECT COUNT(*) AS ventas, COALESCE(SUM(v.total),0) AS total,
+                COALESCE(SUM(v.subtotal - v.costo_total),0) AS ganancia,
+                COALESCE(SUM(CASE WHEN v.metodo_pago = 'efectivo' THEN v.total ELSE 0 END),0) AS efectivo
+         FROM ventas v $filtro
+           AND YEAR(v.creado_en) = YEAR(NOW()) AND MONTH(v.creado_en) = MONTH(NOW())",
+        $params
+    );
+
+    // --- Como se reparte el dinero por metodo de pago --------------------
+    $por_metodo = consultar(
+        "SELECT v.metodo_pago, COUNT(*) AS ventas, COALESCE(SUM(v.total),0) AS total,
+                COALESCE(SUM(v.subtotal - v.costo_total),0) AS ganancia
+         FROM ventas v $filtro
+         GROUP BY v.metodo_pago
+         ORDER BY total DESC",
+        $params
+    );
+
+    foreach ($por_metodo as &$m) {
+        $m['ventas'] = (int) $m['ventas'];
+        $m['total'] = (float) $m['total'];
+        $m['ganancia'] = (float) $m['ganancia'];
+    }
+    unset($m);
+
+    responder(200, [
+        'ingresos' => $filas,
+        'resumen' => [
+            'hoy' => [
+                'ventas'    => (int) ($hoy['ventas'] ?? 0),
+                'total'     => (float) ($hoy['total'] ?? 0),
+                'ganancia'  => (float) ($hoy['ganancia'] ?? 0),
+                'efectivo'  => (float) ($hoy['efectivo'] ?? 0),
+            ],
+            'mes' => [
+                'ventas'    => (int) ($mes['ventas'] ?? 0),
+                'total'     => (float) ($mes['total'] ?? 0),
+                'ganancia'  => (float) ($mes['ganancia'] ?? 0),
+                'efectivo'  => (float) ($mes['efectivo'] ?? 0),
+            ],
+            'por_metodo' => $por_metodo,
         ],
         'paginacion' => [
             'pagina' => $pagina,

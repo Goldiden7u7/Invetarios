@@ -486,6 +486,53 @@ export type Venta = {
   n_items?: number;
 };
 
+// ----------------------------------------------------------------------
+//  INGRESOS DE CAJA  (movimientos.php?vista=caja)
+// ----------------------------------------------------------------------
+//  La segunda seleccion de la pantalla Movimientos. No es mercaderia sino
+//  dinero: una fila por venta cerrada con quien cobro, como cobro y
+//  cuanto le quedo de ganancia al negocio.
+// ----------------------------------------------------------------------
+
+/** Una venta vista como entrada de dinero a la caja. */
+export type IngresoCaja = {
+  id: number;
+  codigo: string;
+  cliente_nombre: string | null;
+  metodo_pago: MetodoPago;
+  subtotal: number;
+  descuento: number;
+  total: number;
+  costo_total: number;
+  /** Ganancio real: lo que se cobro menos lo que costo hacer el combo. */
+  ganancia: number;
+  creado_en: string;
+  cajero: string;
+};
+
+/** Cifras de un periodo (hoy o el mes en curso). */
+export type ResumenIngresos = {
+  ventas: number;
+  total: number;
+  ganancia: number;
+  /** Parte del total que entro en efectivo (lo que queda en la gaveta). */
+  efectivo: number;
+};
+
+export type ResumenCaja = {
+  hoy: ResumenIngresos;
+  mes: ResumenIngresos;
+  por_metodo: { metodo_pago: MetodoPago; ventas: number; total: number; ganancia: number }[];
+};
+
+export type RespuestaCaja = {
+  ingresos: IngresoCaja[];
+  resumen: ResumenCaja;
+  paginacion: Paginacion;
+};
+
+// ----------------------------------------------------------------------
+
 export type RespuestaVentas = {
   ventas: Venta[];
   resumen: {

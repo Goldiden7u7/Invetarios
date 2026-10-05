@@ -306,7 +306,7 @@ Crea ventas de los ultimos 30 dias y deja pedidos pendientes en cocina.
 C:\xampp\php\php.exe api/pruebas.php
 ```
 
-Verifica 148 casos: autenticacion, permisos, CRUD, stock, transferencias,
+Verifica 163 casos: autenticacion, permisos, CRUD, stock, transferencias,
 ventas y la separacion de caja/cocina. Se limpian solas al terminar, asi que
 se pueden repetir.
 
@@ -319,9 +319,14 @@ Cada uno entra por su modulo y **no ve lo que no le corresponde**:
 
 | Correo | Clave | Ve el menu | **NO** puede |
 |---|---|---|---|
-| `admin@inventario.com` | `Admin123!` | Todo: Resumen, Caja, Cocina, Inventario, Movimientos, Transferencias, Almacenes, Categorias, Usuarios | — |
+| `admin@inventario.com` | `Admin123!` | Resumen, Inventario, Movimientos, Transferencias, Almacenes, Categorias, Usuarios | **Cobrar** en la caja, entrar a **Cocina** |
 | `caja@inventario.com` | `Caja123!` | **Caja** e Inventario | Ver el Resumen con las cifras, ver el historial de ventas, entrar a Cocina, gestionar usuarios |
 | `cocina@inventario.com` | `Cocina123!` | **Cocina** e Inventario | Ver cifras o historial de ventas, cobrar, entrar a Caja |
+
+El administrador es el **dueño**: administra el catalogo y mira los numeros,
+pero no trabaja ni en la caja ni en la cocina. Esos dos trabajos tienen su
+propia cuenta. Si el dueño quisiera relevar un turno, entra con la cuenta del
+cajero o de cocina.
 
 La separacion va en dos capas, no solo en el menu:
 
@@ -333,6 +338,21 @@ La separacion va en dos capas, no solo en el menu:
 Asi, por ejemplo, el de cocina **no puede registrar una venta** ni aunque
 intente hacerlo directamente contra el API, porque esa accion exige a la vez
 el permiso de *crear* y el de *Caja*.
+
+### El dinero de cada venta, en Movimientos → Caja
+
+Adentro de **Movimientos** hay dos pestanas:
+
+- **Stock** — las entradas, salidas y ajustes del inventario (lo que entra y
+  sale del almacen).
+- **Caja** — el dinero de cada venta: cuanto entro, quien cobro, con que
+  metodo de pago y cuanta ganancia dejo. Arriba van tres tarjetas: lo que
+  entro **hoy**, lo que quedo **en efectivo** (que es lo que sigue en la
+  gaveta) y el **acumulado del mes** con su ganancia.
+
+Esta segunda pestana pide el permiso de *ventas*, asi que la ve el
+administrador (y los roles de control), no el cajero ni el de cocina: las
+cifras del negocio no son de quien cobra.
 
 ### Para darle una cuenta nueva a un empleado
 
@@ -354,7 +374,7 @@ api/                 API PHP (un archivo por recurso)
   auth/              login.php, logout.php, yo.php
   nucleo.php         Base comun: conexion, sesiones, permisos, helpers
   config.php         Conexion a la base de datos (SIN secretos)
-  pruebas.php        Suite de 148 pruebas automaticas
+  pruebas.php        Suite de 163 pruebas automaticas
   README-permisos.md Que permiso exige cada endpoint
   semilla_ventas.php Genera ventas de ejemplo
 sql/
