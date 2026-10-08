@@ -482,25 +482,25 @@ GROUP BY p.id, p.codigo, p.nombre, p.unidad_medida, p.stock_minimo, p.perecedero
 -- Los tres ultimos bits separan los trabajos: quien cobra no ve las cifras
 -- de ventas y quien cocina no puede cobrar.
 --
--- El ADMINISTRADOR es el dueno: mira los numeros y administra el catalogo,
--- pero NO trabaja ni en la caja ni en la cocina (esos son 256 y 512, y se
--- los quitamos a proposito). Si el dueño quisiera relevar un turno, entra
--- con un usuario Vendedor o Cocina.
+-- El ADMINISTRADOR tiene los tres modulos: al ser el dueno puede relevar un
+-- turno y entrar tanto a la Caja como a la Cocina ademas de ver los numeros.
+-- Por eso sus permisos son la suma de todo (1023). El control fino esta en
+-- los otros roles, que si cada uno solo entra a lo suyo.
 --
 --   Administrador 127  = 1+2+4+8+16+32+64
---                      | 128                ->  255 (ve ventas, no cobra ni cocina)
+--                      | 128+256+512          -> 1023 (entra a todo)
 --   Supervisor    31   = 1+2+4+8
---                      | 128+512            ->  671 (ve ventas y cocina)
+--                      | 128+512              ->  671 (ve ventas y cocina)
 --   Operador      19   = 1+2+4
---                      | 128+256+512        ->  915 (inventario y caja)
+--                      | 128+256+512          ->  915 (inventario y caja)
 --   Consulta       1   = 1
---                      | 128+256+512        ->  897 (solo mira, en todo)
+--                      | 128+256+512          ->  897 (solo mira, en todo)
 --   Vendedor       3   = 1+2
---                      | 256                ->  259 (solo la Caja)
+--                      | 256                  ->  259 (solo la Caja)
 --   Cocina         3   = 1+2
---                      | 512                ->  515 (solo Cocina)
+--                      | 512                  ->  515 (solo Cocina)
 INSERT INTO `roles` (`id`, `nombre`, `descripcion`, `permisos`) VALUES
-  (1, 'Administrador', 'Control total del sistema',        255),
+  (1, 'Administrador', 'Control total del sistema',        1023),
   (2, 'Supervisor',    'Opera inventarios y ve reportes',   671),
   (3, 'Operador',      'Registra entradas y salidas',       915),
   (4, 'Consulta',      'Solo puede ver',                    897),
@@ -642,9 +642,9 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- ======================================================================
 --  USUARIOS INICIALES
 --
---  Tres cuentas separadas, una por trabajo. El administrador ve las cifras
---  (Resumen y la seleccion "Caja" de Movimientos) pero no cobra ni cocina;
---  el cajero solo cobra; el de cocina solo prepara pedidos.
+--  Tres cuentas separadas, una por trabajo. El administrador entra a todo
+--  (Resumen, Caja, Cocina y los modulos de control); el cajero solo cobra
+--  y el de cocina solo prepara pedidos.
 --
 --    admin@inventario.com   Administrador   Admin123!
 --    caja@inventario.com    Vendedor        Caja123!

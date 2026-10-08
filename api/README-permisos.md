@@ -35,9 +35,9 @@ Así el que cobra no ve en qué factura el negocio, y el de cocina no puede
 cobrar aunque sepa crear. Como son flags de bits, se pueden exigir varios a
 la vez: `exigir_permiso(2 | 256, 'cobrar')` pide **crear** *y* **caja**.
 
-> El **Administrador no tiene ni 256 ni 512**: es el dueño que administra el
-> catálogo y mira los números, no el que cobra ni el que cocina. Por eso los
-> módulos Caja y Cocina no le aparecen en el menú.
+> El **Administrador suma todo (1023)**: al ser el dueño puede relevar un
+> turno y entrar tanto a Caja como a Cocina además de ver los números. El
+> control fino está en los otros roles, que cada uno entra solo a lo suyo.
 
 ---
 
@@ -64,8 +64,9 @@ Notas:
   `crear` **y** `caja`. Con esto el rol Cocina puede ver la cola pero no
   puede registrar una venta ni aunque escriba la URL a mano.
 - **`pedidos.php`**: tanto el GET como el POST piden el bit 512 de cocina.
-  El GET pide **solo 512**, no `1 | 512`: así ni el administrador (que tiene
-  `ver`) ni el cajero pueden leer la cola ni escribiéndole la URL a mano.
+  El GET pide el bit **512 solo** (no `1 | 512`): así el cajero —que tiene
+  `ver` pero no el módulo Cocina— no puede leer la cola escribiéndole la URL
+  a mano. El administrador (1023) sí tiene 512, así que entra sin problema.
 - **`movimientos.php?vista=caja`**: es la segunda pestaña de la pantalla
   Movimientos. No devuelve movimientos de stock sino **el dinero de cada
   venta** (cuánto entró, quién cobró, con qué método y cuánta ganancia), así
@@ -83,7 +84,7 @@ Notas:
 
 | Rol          | Bits                                              | Suma | Puede…                                       |
 | ------------ | ------------------------------------------------- | ---- | -------------------------------------------- |
-| Administrador| 1+2+4+8+16+32+64 + 128                           | 255  | Todo el catálogo y **las cifras**, pero no cobra ni cocina. |
+| Administrador| 1+2+4+8+16+32+64 + 128+256+512                   | 1023 | Todo, incluida la Caja y la Cocina.          |
 | Supervisor   | 1+2+4+8+16 + 128+512                              | 671  | Inventario, transferencias, ventas y cocina. |
 | Operador     | 1+2+16 + 128+256+512                              | 915  | Inventario y caja, sin borrar nada.         |
 | Consulta     | 1 + 128+256+512                                   | 897  | Solo lectura, en todo.                      |
@@ -101,7 +102,7 @@ Notas:
 | `caja@inventario.com`  | Vendedor      | `Caja123!`   |
 | `cocina@inventario.com`| Cocina        | `Cocina123!` |
 
-Cada uno entra por su módulo solo: el administrador aterriza en el Resumen
-(con el dinero de cada venta en Movimientos → Caja), el cajero en Caja, el de
-cocina en Cocina, y ni el cajero ni el de cocina ven el Resumen.
-**Cambia las tres contraseñas al crear la base de datos.**
+Cada uno entra por su módulo: el administrador aterriza en el Resumen (y
+entra también a Caja, Cocina y a la selección **Caja** de Movimientos), el
+cajero en Caja, el de cocina en Cocina, y ni el cajero ni el de cocina ven
+el Resumen. **Cambia las tres contraseñas al crear la base de datos.**

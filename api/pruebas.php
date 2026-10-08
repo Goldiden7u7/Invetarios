@@ -562,10 +562,11 @@ $r = pedir('/combos.php', 'POST', [
 verificar('Crea combo dedicado para caja', $r['codigo'] === 201);
 $combo_ven = $r['json']['datos']['id'] ?? 0;
 
-// A partir de aqui las pruebas de venta ya NO las hace el administrador:
-// el dueño administra el catalogo y mira las cifras, pero no cobra ni
-// cocina. Usamos un Operador, que si tiene los tres bits de modulo
-// (ventas, caja y cocina), y asi tambien cubre la seccion 10 de pedidos.
+// Las ventas de prueba las hace un Operador (no el admin): el Operador es
+// quien en la vida real esta en el modulo de caja, y asi de paso queda
+// cubierto ese rol en la suite. Sus tres bits de modulo (ventas, caja y
+// cocina) tambien le sirven para la seccion 10 de pedidos. Al final, en la
+// seccion 12 se comprueba que el Administrador (1023) igualmente puede.
 $email_ope = 'operador' . rand(1000, 9999) . '@inventario.com';
 $r = pedir('/usuarios.php', 'POST', [
     'nombre' => 'Operador de prueba', 'email' => $email_ope,
@@ -792,8 +793,9 @@ $cookie = $cookie_admin;
 
 seccion('12. ADMINISTRADOR: CIFRAS, CAJA Y COCINA');
 
-// El dueno administra el catalogo y mira los numeros, pero no trabaja ni en
-// la caja ni en la cocina: esos dos modulos se los quitamos del rol.
+// El administrador entra a todo: ve los numeros y, ademas de administrar el
+// catalogo, puede relevar un turno, es decir cobra en la Caja y mueve la
+// Cocina. Por eso el rol suma 1023.
 $r = pedir('/dashboard.php');
 verificar('Admin SI ve las cifras de ventas (200)', $r['codigo'] === 200);
 
@@ -803,17 +805,23 @@ verificar('Admin SI ve el historial de ventas (200)', $r['codigo'] === 200);
 $r = pedir('/movimientos.php');
 verificar('Admin SI ve los movimientos de stock (200)', $r['codigo'] === 200 && isset($r['json']['datos']['movimientos']));
 
+// --- Le toca tambien la Caja ------------------------------------------
 $r = pedir('/ventas.php', 'POST', [
     'almacen_id' => 1,
     'items' => [['combo_id' => $combo_ven, 'cantidad' => 1]],
 ]);
-verificar('Admin NO puede cobrar (403)', $r['codigo'] === 403);
+verificar('Admin SI puede cobrar (201)', $r['codigo'] === 201);
 
+// --- Y la Cocina -------------------------------------------------------
+// La cola la lee bien...
 $r = pedir('/pedidos.php');
-verificar('Admin NO ve la cola de cocina (403)', $r['codigo'] === 403);
+verificar('Admin SI ve la cola de cocina (200)', $r['codigo'] === 200 && isset($r['json']['datos']['pedidos']));
 
-$r = pedir('/pedidos.php', 'POST', ['id' => 1, 'estado' => 'listo']);
-verificar('Admin NO avanza pedidos (403)', $r['codigo'] === 403);
+// ...y para mover pedidos usamos un id inexistente: si contestara 403 seria
+// que no tiene el bit de cocina; un 404 significa que supero el permiso y
+// llego a buscar el pedido. Asi no tocamos ningun pedido real de la prueba.
+$r = pedir('/pedidos.php', 'POST', ['id' => 999999, 'estado' => 'listo']);
+verificar('Admin SI puede avanzar pedidos (404, no 403)', $r['codigo'] === 404);
 
 // --- La segunda pestana de Movimientos: el dinero de cada venta ------------
 

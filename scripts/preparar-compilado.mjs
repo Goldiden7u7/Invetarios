@@ -103,11 +103,11 @@ Abre  http://127.0.0.1:8080
     Caja            caja@inventario.com     Caja123!
     Cocina          cocina@inventario.com   Cocina123!
 
-Cada usuario entra solo a su modulo: el de caja cobra pero NO ve las
-cifras de ventas, y el de cocina prepara pedidos pero NO puede cobrar.
-El administrador administra el catalogo y ve los numeros, pero NO cobra
-ni cocina. Los ingresos de cada venta los mira en
-Movimientos -> pestana "Caja".
+Cada usuario entra a su modulo: el de caja cobra pero NO ve las cifras de
+ventas, y el de cocina prepara pedidos pero NO puede cobrar. El
+administrador entra a TODO: mira los numeros, administra el catalogo y
+tambien puede cobrar o mover la cocina si hace falta. Los ingresos de cada
+venta los mira en Movimientos -> pestana "Caja".
 
 CAMBIA LAS TRES CONTRASENAS apenas entres (menu Usuarios).
 

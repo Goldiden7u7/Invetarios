@@ -319,14 +319,14 @@ Cada uno entra por su modulo y **no ve lo que no le corresponde**:
 
 | Correo | Clave | Ve el menu | **NO** puede |
 |---|---|---|---|
-| `admin@inventario.com` | `Admin123!` | Resumen, Inventario, Movimientos, Transferencias, Almacenes, Categorias, Usuarios | **Cobrar** en la caja, entrar a **Cocina** |
+| `admin@inventario.com` | `Admin123!` | **Todo**: Resumen, Caja, Cocina, Inventario, Movimientos, Transferencias, Almacenes, Categorias, Usuarios | — |
 | `caja@inventario.com` | `Caja123!` | **Caja** e Inventario | Ver el Resumen con las cifras, ver el historial de ventas, entrar a Cocina, gestionar usuarios |
 | `cocina@inventario.com` | `Cocina123!` | **Cocina** e Inventario | Ver cifras o historial de ventas, cobrar, entrar a Caja |
 
-El administrador es el **dueño**: administra el catalogo y mira los numeros,
-pero no trabaja ni en la caja ni en la cocina. Esos dos trabajos tienen su
-propia cuenta. Si el dueño quisiera relevar un turno, entra con la cuenta del
-cajero o de cocina.
+El administrador es el **dueño** y entra a todo: administra el catalogo, ve
+los numeros y, si hace falta relevar un turno, tambien puede cobrar en la
+Caja o mover la Cocina. Los roles Vendedor y Cocina son para los empleados,
+que cada uno entra solo a lo suyo.
 
 La separacion va en dos capas, no solo en el menu:
 
