@@ -27,7 +27,7 @@ Los siete de arriba dicen **qué** puede hacer una persona. Estos tres dicen
 
 | Bit | Constante (frontend) | Módulo                       |
 | --- | -------------------- | ---------------------------- |
-| 128 | `PERMISO.ventas`     | **Resumen** — cifras e historial de ventas, y la selección **Caja** de Movimientos |
+| 128 | `PERMISO.ventas`     | **Resumen** — cifras e historial de ventas, y la selección **Caja** de Movimientos (ingresos y pagos de servicios) |
 | 256 | `PERMISO.caja`       | **Caja** — cobrar una venta   |
 | 512 | `PERMISO.cocina`     | **Cocina** — ver y mover pedidos |
 
@@ -51,6 +51,7 @@ la vez: `exigir_permiso(2 | 256, 'cobrar')` pide **crear** *y* **caja**.
 | `almacenes.php`  | 1         | 2                         | 4            | 8                 |
 | `combos.php`     | 1         | 4                         | 4            | 8                 |
 | `movimientos.php`| 1 (**128** si `?vista=caja`) | 16                    | —            | —                 |
+| `pagos.php`     | **128**   | 2 \| **128** (retirar)     | —            | —                 |
 | `transferencias.php` | 1     | 16 (enviar **y** recibir/cancelar) | — | —       |
 | `pedidos.php`    | **512** | 2 \| **512** (avanzar) | —            | —                 |
 | `ventas.php`     | **128**   | 2 \| **256** (cobrar)     | —            | —                 |
@@ -73,6 +74,11 @@ Notas:
   que pide **128** (ventas), no 1. Quien mueve mercadería pero no ve las
   cifras del negocio no la ve. Sin `?vista=caja` el GET es el de siempre y
   pide 1.
+- **`pagos.php`**: vive DENTRO de esa misma pestaña Caja. El GET (el
+  historial de retiros) pide **128**, y el POST (retirar dinero) pide
+  `crear` **y** 128: se retira plata de la caja y eso es decisión de quien
+  ve los números (el administrador), no del cajero que cobra (256) ni del
+  de cocina (512).
 - **`usuarios.php`**: todo el bloque exige bit 32 (solo Administradores por
   defecto).
 - **`combos.php`**: crear y editar exigen bit 4 (no 2), porque son tareas de

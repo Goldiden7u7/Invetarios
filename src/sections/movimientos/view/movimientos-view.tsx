@@ -149,7 +149,7 @@ export function MovimientosView() {
         titulo="Movimientos"
         descripcion={
           puedeVerCaja
-            ? 'Entradas y salidas de stock, y el dinero que entra en la caja con cada venta.'
+            ? 'Entradas y salidas de stock, y el dinero de la caja: lo que entra con cada venta y lo que se retira en pagos de servicios.'
             : 'Entradas, salidas y ajustes de stock.'
         }
         icono="solar:transfer-vertical-bold-duotone"

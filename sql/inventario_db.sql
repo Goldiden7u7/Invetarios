@@ -408,6 +408,31 @@ CREATE TABLE `auditoria` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------
+-- 17. PAGOS_SERVICIOS  --  Retiros de dinero de la caja para gastos del negocio
+--     Los cuatro rubros que paga la cafeteria: trabajadores, transporte,
+--     local y servicios. Cada pago lleva su monto y una descripcion de para
+--     que fue. No toca stock: es plata que SALIO de la caja.
+-- ----------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `pagos_servicios`;
+CREATE TABLE `pagos_servicios` (
+  `id`          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `codigo`      VARCHAR(20)    NOT NULL COMMENT 'PGS-00001',
+  `categoria`   ENUM('trabajadores','transporte','local','servicios') NOT NULL,
+  `monto`       DECIMAL(12,2)  NOT NULL COMMENT 'Lo que se retiro de la caja',
+  `descripcion` VARCHAR(255)   NOT NULL DEFAULT '',
+  `usuario_id`  INT UNSIGNED   NOT NULL,
+  `creado_en`   TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_pagos_codigo` (`codigo`),
+  KEY `ix_pagos_categoria` (`categoria`, `creado_en`),
+  KEY `ix_pagos_fecha` (`creado_en`),
+  KEY `ix_pagos_usuario` (`usuario_id`),
+  CONSTRAINT `fk_pagos_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`)
+    ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------
 -- VISTAS
 -- ----------------------------------------------------------------------
 

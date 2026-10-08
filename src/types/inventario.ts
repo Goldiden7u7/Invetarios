@@ -532,6 +532,51 @@ export type RespuestaCaja = {
 };
 
 // ----------------------------------------------------------------------
+//  PAGOS DE SERVICIOS  (pagos.php — dentro de Movimientos > Caja)
+// ----------------------------------------------------------------------
+//  Los retiros de dinero de la caja para los gastos del negocio: sueldos,
+//  transporte, renta del local y servicios. Una fila por retiro con su
+//  monto y una descripcion de para que fue. No toca stock.
+// ----------------------------------------------------------------------
+
+export type CategoriaPago = 'trabajadores' | 'transporte' | 'local' | 'servicios';
+
+/** Retiro de dinero de la caja para pagar un gasto del negocio. */
+export type PagoServicio = {
+  id: number;
+  codigo: string;
+  categoria: CategoriaPago;
+  monto: number;
+  descripcion: string;
+  creado_en: string;
+  usuario_nombre: string;
+};
+
+/** Cifras de un periodo (hoy o el mes en curso). */
+export type ResumenPagosPeriodo = {
+  pagos: number;
+  total: number;
+};
+
+export type ResumenPagos = {
+  hoy: ResumenPagosPeriodo;
+  mes: ResumenPagosPeriodo;
+  por_categoria: { categoria: CategoriaPago; pagos: number; total: number }[];
+};
+
+export type RespuestaPagos = {
+  pagos: PagoServicio[];
+  resumen: ResumenPagos;
+  paginacion: Paginacion;
+};
+
+export type RespuestaPagoCreado = {
+  id: number;
+  codigo: string;
+  mensaje: string;
+};
+
+// ----------------------------------------------------------------------
 
 export type RespuestaVentas = {
   ventas: Venta[];

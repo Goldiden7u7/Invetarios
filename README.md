@@ -345,14 +345,19 @@ Adentro de **Movimientos** hay dos pestanas:
 
 - **Stock** — las entradas, salidas y ajustes del inventario (lo que entra y
   sale del almacen).
-- **Caja** — el dinero de cada venta: cuanto entro, quien cobro, con que
-  metodo de pago y cuanta ganancia dejo. Arriba van tres tarjetas: lo que
-  entro **hoy**, lo que quedo **en efectivo** (que es lo que sigue en la
-  gaveta) y el **acumulado del mes** con su ganancia.
+- **Caja** — el dinero de la caja, en dos subpestanas:
+  - **Ingresos** — cada venta: cuanto entro, quien cobro, con que metodo de
+    pago y cuanta ganancia dejo. Arriba van tres tarjetas: lo que entro
+    **hoy**, lo que quedo **en efectivo** (lo que sigue en la gaveta) y el
+    **acumulado del mes** con su ganancia.
+  - **Pagos de servicios** — lo que **sale** de la caja para los gastos del
+    negocio. Cuatro botones: **trabajadores**, **transporte**, **local** y
+    **servicios**; al tocar uno se escribe la descripcion y el monto a
+    retirar. Debajo queda el historial con lo retirado hoy y en el mes.
 
-Esta segunda pestana pide el permiso de *ventas*, asi que la ve el
-administrador (y los roles de control), no el cajero ni el de cocina: las
-cifras del negocio no son de quien cobra.
+La pestana Caja pide el permiso de *ventas*: la ve el administrador (y los
+roles de control), no el cajero ni el de cocina. Las cifras del negocio no
+son de quien cobra, y tampoco lo es retirar dinero de la caja.
 
 ### Para darle una cuenta nueva a un empleado
 
@@ -374,7 +379,7 @@ api/                 API PHP (un archivo por recurso)
   auth/              login.php, logout.php, yo.php
   nucleo.php         Base comun: conexion, sesiones, permisos, helpers
   config.php         Conexion a la base de datos (SIN secretos)
-  pruebas.php        Suite de 163 pruebas automaticas
+  pruebas.php        Suite de 176 pruebas automaticas
   README-permisos.md Que permiso exige cada endpoint
   semilla_ventas.php Genera ventas de ejemplo
 sql/

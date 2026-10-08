@@ -106,8 +106,9 @@ Abre  http://127.0.0.1:8080
 Cada usuario entra a su modulo: el de caja cobra pero NO ve las cifras de
 ventas, y el de cocina prepara pedidos pero NO puede cobrar. El
 administrador entra a TODO: mira los numeros, administra el catalogo y
-tambien puede cobrar o mover la cocina si hace falta. Los ingresos de cada
-venta los mira en Movimientos -> pestana "Caja".
+tambien puede cobrar o mover la cocina si hace falta. El dinero de cada
+venta (lo que ENTRO) y los pagos de servicios (lo que SALIO: trabajadores,
+transporte, local y servicios) los mira en Movimientos -> pestana "Caja".
 
 CAMBIA LAS TRES CONTRASENAS apenas entres (menu Usuarios).
 
@@ -127,7 +128,7 @@ Con el servidor del paso 2 corriendo, abre:
 
     http://127.0.0.1:8080/pruebas.php
 
-Debe decir "163 correctas, 0 fallidas".
+Debe decir "176 correctas, 0 fallidas".
 
 VENTAS DE EJEMPLO
 -----------------

@@ -849,9 +849,72 @@ verificar('El filtro por metodo de pago funciona',
     && count(array_filter($r['json']['datos']['ingresos'] ?? [],
         fn($f) => $f['metodo_pago'] !== 'efectivo')) === 0);
 
+seccion('13. PAGOS DE SERVICIOS (dentro de Movimientos > Caja)');
+
+// Es el dinero que SALE de la caja, y quien lo ve es quien ve las cifras
+// (el administrador, 128). El cajero no debe poder ni leerlo ni retirarlo.
+$pago_ids = [];
+$cookie = null;
+pedir('/auth/login.php', 'POST', ['email' => $email_vend, 'password' => 'Vende123']);
+$r = pedir('/pagos.php');
+verificar('El cajero NO ve los pagos de servicios (403)', $r['codigo'] === 403);
+$r = pedir('/pagos.php', 'POST', ['categoria' => 'trabajadores', 'monto' => 100, 'descripcion' => 'Intento']);
+verificar('El cajero NO puede retirar dinero de la caja (403)', $r['codigo'] === 403);
+
+$cookie = $cookie_admin;
+
+$r = pedir('/pagos.php');
+verificar('Admin SI ve los pagos de servicios (200)', $r['codigo'] === 200);
+verificar('Los pagos traen el resumen de hoy y del mes',
+    isset($r['json']['datos']['resumen']['hoy'], $r['json']['datos']['resumen']['mes']));
+verificar('Los pagos se reparten por rubro', isset($r['json']['datos']['resumen']['por_categoria']));
+
+$r = pedir('/pagos.php', 'POST', [
+    'categoria' => 'trabajadores',
+    'monto' => 500.50,
+    'descripcion' => 'PRUEBA: salario semanal',
+]);
+verificar('Registra un pago de trabajadores (201)', $r['codigo'] === 201 && isset($r['json']['datos']['codigo']));
+$pago_ids[] = $r['json']['datos']['id'] ?? 0;
+
+$r = pedir('/pagos.php', 'POST', ['categoria' => 'trabajadores', 'monto' => 0, 'descripcion' => 'PRUEBA']);
+verificar('Rechaza un monto en cero (400)', $r['codigo'] === 400);
+
+$r = pedir('/pagos.php', 'POST', ['categoria' => 'vehiculos', 'monto' => 10, 'descripcion' => 'PRUEBA']);
+verificar('Rechaza un rubro no valido (400)', $r['codigo'] === 400);
+
+$r = pedir('/pagos.php', 'POST', ['categoria' => 'servicios', 'monto' => 10, 'descripcion' => '   ']);
+verificar('Pide la descripcion del pago (400)', $r['codigo'] === 400);
+
+$r = pedir('/pagos.php', 'POST', [
+    'categoria' => 'transporte',
+    'monto' => 120,
+    'descripcion' => 'PRUEBA: flete de mercancia',
+]);
+verificar('Registra un pago de transporte (201)', $r['codigo'] === 201);
+$pago_ids[] = $r['json']['datos']['id'] ?? 0;
+
+$r = pedir('/pagos.php');
+$filas_pagos = $r['json']['datos']['pagos'] ?? [];
+verificar('El historial muestra los pagos registrados',
+    count($filas_pagos) >= 2
+    && $filas_pagos[0]['categoria'] === 'transporte'
+    && $filas_pagos[1]['categoria'] === 'trabajadores');
+
+$total_hoy_pagos = (float) ($r['json']['datos']['resumen']['hoy']['total'] ?? 0);
+verificar('El total de hoy cuadra con la suma de los pagos de hoy',
+    abs($total_hoy_pagos - (float) consultar_uno("SELECT COALESCE(SUM(monto),0) AS t FROM pagos_servicios
+        WHERE DATE(creado_en) = CURDATE()")['t']) < 0.01);
+
+$r = pedir('/pagos.php?categoria=transporte');
+verificar('El filtro por rubro funciona',
+    $r['codigo'] === 200
+    && count(array_filter($r['json']['datos']['pagos'] ?? [],
+        fn($f) => $f['categoria'] !== 'transporte')) === 0);
+
 // ----------------------------------------------------------------------
 
-seccion('13. DASHBOARD');
+seccion('14. DASHBOARD');
 
 $r = pedir('/dashboard.php');
 verificar('Dashboard responde', $r['codigo'] === 200);
@@ -873,7 +936,18 @@ verificar('Top de productos mas consumidos', isset($r['json']['datos']['graficas
 
 // ----------------------------------------------------------------------
 
-seccion('14. LIMPIEZA');
+seccion('15. LIMPIEZA');
+
+// Purga directa de los pagos de prueba (los creo el admin, asi que la
+// limpieza de usuarios no los toca).
+if (!empty($pago_ids)) {
+    $ids_pago = array_map('intval', (array) $pago_ids);
+    $marcas = implode(',', array_fill(0, count($ids_pago), '?'));
+    ejecutar("DELETE FROM pagos_servicios WHERE id IN ($marcas)", $ids_pago);
+    foreach ($ids_pago as $pid) {
+        ejecutar('DELETE FROM auditoria WHERE tabla = ? AND registro_id = ?', ['pagos_servicios', $pid]);
+    }
+}
 
 $r = pedir('/productos.php?por_pagina=100');
 verificar('El sistema responde al final de las pruebas', $r['codigo'] === 200);
@@ -907,7 +981,7 @@ verificar('El usuario de prueba fue eliminado', !in_array($user_id, array_column
 // limpiar_rastros() borra solo los rastros de los datos de prueba; las
 // acciones del admin (logins) se quedan, que es justo lo que auditamos.
 
-seccion('15. INTEGRIDAD DE LAS RESPUESTAS');
+seccion('16. INTEGRIDAD DE LAS RESPUESTAS');
 
 // Un warning de PHP impreso dentro del cuerpo rompe el fetch() del navegador
 // sin avisar nada. Lo comprobamos aqui para que nunca pase desapercibido.
