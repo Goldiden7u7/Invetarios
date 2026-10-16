@@ -14,8 +14,8 @@ import { api, ApiError } from 'src/api/client';
 //  INGRESOS DE CAJA
 //  Lee la segunda vista de api/movimientos.php: ?vista=caja. Cada fila es
 //  una venta cerrada (el dinero que entro), no un movimiento de stock.
-//  Pide el permiso de ventas (128), por eso solo el administrador y los
-//  roles de control ven esta pestana.
+//  Pide el permiso de ventas (128), por eso la ven el administrador y el
+//  cajero (Vendedor); el de cocina no.
 // ----------------------------------------------------------------------
 
 const RESUMEN_VACIO: ResumenCaja = {

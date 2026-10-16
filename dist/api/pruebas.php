@@ -737,16 +737,24 @@ $r = pedir('/combos.php', 'PUT', ['id' => $combo_ven, 'codigo' => 'PRUEBA-CAJA-X
 verificar('Vendedor NO puede editar el menu (403)', $r['codigo'] === 403);
 
 $r = pedir('/movimientos.php', 'POST', ['producto_id' => $prod_ven, 'almacen_id' => 1, 'tipo' => 'entrada', 'cantidad' => 1]);
-verificar('Vendedor NO mueve inventario (403)', $r['codigo'] === 403);
+verificar('Vendedor SI mueve inventario (201)', $r['codigo'] === 201);
 
 $r = pedir('/pedidos.php');
 verificar('Vendedor NO ve la cocina (403)', $r['codigo'] === 403);
 
 $r = pedir('/dashboard.php');
-verificar('Vendedor NO ve las cifras de ventas (403)', $r['codigo'] === 403);
+verificar('Vendedor SI ve las cifras de ventas (200)', $r['codigo'] === 200);
 
 $r = pedir('/ventas.php');
-verificar('Vendedor NO ve el historial de ventas (403)', $r['codigo'] === 403);
+verificar('Vendedor SI ve el historial de ventas (200)', $r['codigo'] === 200);
+
+// El cajero lleva ademas la pestana Caja de Movimientos: ve los ingresos de
+// cada venta y los pagos de servicios.
+$r = pedir('/movimientos.php?vista=caja');
+verificar('Vendedor SI ve el dinero de la caja (200)', $r['codigo'] === 200);
+
+$r = pedir('/pagos.php');
+verificar('Vendedor SI ve los pagos de servicios (200)', $r['codigo'] === 200);
 
 // El rol Cocina es el espejo: mueve pedidos, pero no cobra ni ve cifras.
 // Volvemos a la sesion de admin porque crear usuarios exige bit 32.
@@ -852,14 +860,15 @@ verificar('El filtro por metodo de pago funciona',
 seccion('13. PAGOS DE SERVICIOS (dentro de Movimientos > Caja)');
 
 // Es el dinero que SALE de la caja, y quien lo ve es quien ve las cifras
-// (el administrador, 128). El cajero no debe poder ni leerlo ni retirarlo.
+// (bit 128). El cajero (Vendedor) ahora tambien lo ve; quien no debe poder
+// ni leerlo ni retirarlo es el de Cocina.
 $pago_ids = [];
 $cookie = null;
-pedir('/auth/login.php', 'POST', ['email' => $email_vend, 'password' => 'Vende123']);
+pedir('/auth/login.php', 'POST', ['email' => $email_coc, 'password' => 'Cocina123']);
 $r = pedir('/pagos.php');
-verificar('El cajero NO ve los pagos de servicios (403)', $r['codigo'] === 403);
+verificar('Cocina NO ve los pagos de servicios (403)', $r['codigo'] === 403);
 $r = pedir('/pagos.php', 'POST', ['categoria' => 'trabajadores', 'monto' => 100, 'descripcion' => 'Intento']);
-verificar('El cajero NO puede retirar dinero de la caja (403)', $r['codigo'] === 403);
+verificar('Cocina NO puede retirar dinero de la caja (403)', $r['codigo'] === 403);
 
 $cookie = $cookie_admin;
 

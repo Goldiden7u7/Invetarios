@@ -16,7 +16,7 @@ import { api, ApiError } from 'src/api/client';
 //  Lee api/pagos.php: los retiros de la caja para gastos del negocio
 //  (trabajadores, transporte, local y servicios). Es la pestana que vive
 //  DENTRO de Movimientos > Caja, por eso pide el permiso de ventas (128):
-//  solo el administrador y los roles de control ven (y retiran) esa plata.
+//  la ven (y retiran) el administrador y el cajero; el de cocina no.
 // ----------------------------------------------------------------------
 
 const RESUMEN_VACIO: ResumenPagos = {

@@ -35,8 +35,8 @@ export const navData: NavItem[] = [
     title: 'Resumen',
     path: '/',
     icon: icon('solar:home-smile-bold-duotone'),
-    // Las cifras de ventas son del administrador: quien cobra o cocina no
-    // las necesita y el menu se lo esconde.
+    // Las cifras de ventas las ven el administrador y el cajero (que lleva
+    // la Caja de Movimientos); al de cocina se le esconden.
     permiso: PERMISO.ventas,
   },
   {

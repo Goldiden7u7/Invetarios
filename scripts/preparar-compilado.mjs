@@ -103,12 +103,13 @@ Abre  http://127.0.0.1:8080
     Caja            caja@inventario.com     Caja123!
     Cocina          cocina@inventario.com   Cocina123!
 
-Cada usuario entra a su modulo: el de caja cobra pero NO ve las cifras de
-ventas, y el de cocina prepara pedidos pero NO puede cobrar. El
-administrador entra a TODO: mira los numeros, administra el catalogo y
-tambien puede cobrar o mover la cocina si hace falta. El dinero de cada
-venta (lo que ENTRO) y los pagos de servicios (lo que SALIO: trabajadores,
-transporte, local y servicios) los mira en Movimientos -> pestana "Caja".
+Cada usuario entra a su modulo: el de caja cobra y ademas lleva los
+movimientos y el dinero de la caja (Movimientos -> pestana "Caja": lo que
+ENTRO de cada venta y lo que SALIO en pagos de servicios: trabajadores,
+transporte, local y servicios); el de cocina prepara pedidos pero NO puede
+cobrar ni ve las cifras. El administrador entra a TODO: mira los numeros,
+administra el catalogo y tambien puede cobrar o mover la cocina si hace
+falta.
 
 CAMBIA LAS TRES CONTRASENAS apenas entres (menu Usuarios).
 
@@ -124,11 +125,16 @@ Crea el archivo  api/config.local.php  con tus datos:
 
 PRUEBAS DEL BACKEND
 -------------------
-Con el servidor del paso 2 corriendo, abre:
+Con el servidor del paso 2 corriendo, abre OTRA terminal, entra en la carpeta
+api y ejecuta la suite por consola:
 
-    http://127.0.0.1:8080/pruebas.php
+    Windows:  C:\\xampp\\php\\php.exe pruebas.php
+    Linux:    php pruebas.php
 
-Debe decir "176 correctas, 0 fallidas".
+(No la abras con el navegador: el servidor de PHP atiende una sola peticion a
+la vez y la suite, que se llama a si misma por HTTP, se quedaria esperando.)
+
+Debe decir "178 correctas, 0 fallidas".
 
 VENTAS DE EJEMPLO
 -----------------

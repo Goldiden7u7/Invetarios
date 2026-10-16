@@ -16,7 +16,8 @@ import { IngresosTab } from './ingresos-tab';
 //    - INGRESOS: el dinero de cada venta (cuanto entro, quien cobro).
 //    - PAGOS DE SERVICIOS: los retiros de la caja para gastos del negocio
 //      (trabajadores, transporte, local y servicios).
-//  Ambas piden el permiso de ventas (128): son los numeros del dueno.
+//  Ambas piden el permiso de ventas (128): las ven el administrador y el
+//  cajero (Vendedor).
 // ----------------------------------------------------------------------
 
 export function CajaTab({ activo }: { activo: boolean }) {

@@ -320,13 +320,14 @@ Cada uno entra por su modulo y **no ve lo que no le corresponde**:
 | Correo | Clave | Ve el menu | **NO** puede |
 |---|---|---|---|
 | `admin@inventario.com` | `Admin123!` | **Todo**: Resumen, Caja, Cocina, Inventario, Movimientos, Transferencias, Almacenes, Categorias, Usuarios | — |
-| `caja@inventario.com` | `Caja123!` | **Caja** e Inventario | Ver el Resumen con las cifras, ver el historial de ventas, entrar a Cocina, gestionar usuarios |
+| `caja@inventario.com` | `Caja123!` | **Caja**, Movimientos (Stock y Caja), Transferencias, Inventario y el Resumen | Entrar a Cocina, gestionar usuarios |
 | `cocina@inventario.com` | `Cocina123!` | **Cocina** e Inventario | Ver cifras o historial de ventas, cobrar, entrar a Caja |
 
 El administrador es el **dueño** y entra a todo: administra el catalogo, ve
 los numeros y, si hace falta relevar un turno, tambien puede cobrar en la
-Caja o mover la Cocina. Los roles Vendedor y Cocina son para los empleados,
-que cada uno entra solo a lo suyo.
+Caja o mover la Cocina. El rol Cocina es para quien cocina y entra solo a lo
+suyo; el cajero (Vendedor) cobra y ademas lleva los movimientos de la caja y
+el stock.
 
 La separacion va en dos capas, no solo en el menu:
 
@@ -355,9 +356,9 @@ Adentro de **Movimientos** hay dos pestanas:
     **servicios**; al tocar uno se escribe la descripcion y el monto a
     retirar. Debajo queda el historial con lo retirado hoy y en el mes.
 
-La pestana Caja pide el permiso de *ventas*: la ve el administrador (y los
-roles de control), no el cajero ni el de cocina. Las cifras del negocio no
-son de quien cobra, y tampoco lo es retirar dinero de la caja.
+La pestana Caja pide el permiso de *ventas*: la ven el administrador y el
+cajero (Vendedor), que tambien lleva esa caja; el de cocina no la ve. Las
+cifras del negocio y el dinero que sale quedan fuera del alcance de cocina.
 
 ### Para darle una cuenta nueva a un empleado
 
@@ -379,7 +380,7 @@ api/                 API PHP (un archivo por recurso)
   auth/              login.php, logout.php, yo.php
   nucleo.php         Base comun: conexion, sesiones, permisos, helpers
   config.php         Conexion a la base de datos (SIN secretos)
-  pruebas.php        Suite de 176 pruebas automaticas
+  pruebas.php        Suite de 178 pruebas automaticas
   README-permisos.md Que permiso exige cada endpoint
   semilla_ventas.php Genera ventas de ejemplo
 sql/

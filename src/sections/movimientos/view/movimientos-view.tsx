@@ -58,7 +58,8 @@ export function MovimientosView() {
   const { puede } = useAuth();
   const puedeRegistrar = puede(PERMISO.crear);
 
-  // Las cifras de caja son del administrador: quien mueve mercaderia no las ve.
+  // La pestana Caja (el dinero) pide el bit de ventas: la ven el
+  // administrador y el cajero; el de cocina no.
   const puedeVerCaja = puede(PERMISO.ventas);
 
   const { movimientos, resumen, tipoFiltro, setTipoFiltro, cargando, error, cargar, registrar } = useMovimientos();

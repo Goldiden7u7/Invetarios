@@ -58,7 +58,7 @@ export function DashboardLayout({
   const { value: open, onFalse: onClose, onTrue: onOpen } = useBoolean();
 
   // El menu se arma segun los permisos del usuario: un Consultor no ve
-  // Usuarios ni Almacenes, y un cajero no ve el Resumen ni la Cocina.
+  // Usuarios ni Almacenes, y el de cocina no ve el Resumen ni la Caja.
   // El API lo comprobara igual en cada llamada.
   const permisos = usuario?.permisos ?? 0;
   const menu = useMemo(() => navVisible(permisos), [permisos]);

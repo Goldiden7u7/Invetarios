@@ -10,11 +10,10 @@
  * POST /api/pagos.php                 -> registrar un pago (retiro de la caja)
  *      Body: { categoria, monto, descripcion }
  *
- * DONDE VIVE: dentro de Movimientos > Caja, la seleccion de dinero del
- * dueno. Por eso pide el permiso de ventas (128): retirar plata de la caja
- * es una decision del negocio, no del que mueve mercaderia, y el cajero del
- * modulo Caja (256) no debe entrar. El administrador (1023) si, porque ve
- * los numeros y es quien responde por ese dinero.
+ * DONDE VIVE: dentro de Movimientos > Caja, la seleccion del dinero que
+ * entra y sale. Por eso pide el permiso de ventas (128): la ven el
+ * administrador (1023) y el cajero (Vendedor), que ahora tambien tiene 128.
+ * El de cocina (512) no, porque no maneja el dinero.
  */
 
 require_once __DIR__ . '/nucleo.php';

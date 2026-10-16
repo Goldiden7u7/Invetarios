@@ -31,9 +31,11 @@ Los siete de arriba dicen **qué** puede hacer una persona. Estos tres dicen
 | 256 | `PERMISO.caja`       | **Caja** — cobrar una venta   |
 | 512 | `PERMISO.cocina`     | **Cocina** — ver y mover pedidos |
 
-Así el que cobra no ve en qué factura el negocio, y el de cocina no puede
-cobrar aunque sepa crear. Como son flags de bits, se pueden exigir varios a
-la vez: `exigir_permiso(2 | 256, 'cobrar')` pide **crear** *y* **caja**.
+Así el de cocina no puede cobrar aunque sepa crear, y el cajero (Vendedor)
+—que cobra y además lleva la Caja de Movimientos— ve los ingresos de cada
+venta y los pagos de servicios. Como son flags de bits, se pueden exigir
+varios a la vez: `exigir_permiso(2 | 256, 'cobrar')` pide **crear** *y*
+**caja**.
 
 > El **Administrador suma todo (1023)**: al ser el dueño puede relevar un
 > turno y entrar tanto a Caja como a Cocina además de ver los números. El
@@ -71,14 +73,14 @@ Notas:
 - **`movimientos.php?vista=caja`**: es la segunda pestaña de la pantalla
   Movimientos. No devuelve movimientos de stock sino **el dinero de cada
   venta** (cuánto entró, quién cobró, con qué método y cuánta ganancia), así
-  que pide **128** (ventas), no 1. Quien mueve mercadería pero no ve las
-  cifras del negocio no la ve. Sin `?vista=caja` el GET es el de siempre y
-  pide 1.
+  que pide **128** (ventas), no 1. La ven el administrador y el cajero
+  (Vendedor), que ahora también tiene 128. Sin `?vista=caja` el GET es el de
+  siempre y pide 1.
 - **`pagos.php`**: vive DENTRO de esa misma pestaña Caja. El GET (el
   historial de retiros) pide **128**, y el POST (retirar dinero) pide
-  `crear` **y** 128: se retira plata de la caja y eso es decisión de quien
-  ve los números (el administrador), no del cajero que cobra (256) ni del
-  de cocina (512).
+  `crear` **y** 128: se retira plata de la caja y por eso lo ven quienes
+  tienen las cifras (el administrador y el cajero). El de cocina (512), que
+  no tiene 128, no puede ni leerlo ni retirar.
 - **`usuarios.php`**: todo el bloque exige bit 32 (solo Administradores por
   defecto).
 - **`combos.php`**: crear y editar exigen bit 4 (no 2), porque son tareas de
@@ -94,7 +96,7 @@ Notas:
 | Supervisor   | 1+2+4+8+16 + 128+512                              | 671  | Inventario, transferencias, ventas y cocina. |
 | Operador     | 1+2+16 + 128+256+512                              | 915  | Inventario y caja, sin borrar nada.         |
 | Consulta     | 1 + 128+256+512                                   | 897  | Solo lectura, en todo.                      |
-| Vendedor     | 1+2 + 256                                         | 259  | **Solo la Caja.** Cobra, no ve cifras de ventas. |
+| Vendedor     | 1+2+16 + 128+256                                  | 403  | **Caja y Movimientos.** Cobra, ve los ingresos de cada venta y los pagos de servicios. |
 | Cocina       | 1+2 + 512                                         | 515  | **Solo Cocina.** Ve y avanza pedidos, no cobra ni ve ventas. |
 
 > El `password_hash` se genera con `password_hash()` de PHP (bcrypt); en la
@@ -109,6 +111,7 @@ Notas:
 | `cocina@inventario.com`| Cocina        | `Cocina123!` |
 
 Cada uno entra por su módulo: el administrador aterriza en el Resumen (y
-entra también a Caja, Cocina y a la selección **Caja** de Movimientos), el
-cajero en Caja, el de cocina en Cocina, y ni el cajero ni el de cocina ven
-el Resumen. **Cambia las tres contraseñas al crear la base de datos.**
+entra también a Caja, Cocina y a la selección **Caja** de Movimientos); el
+cajero (Vendedor) tiene Caja, Movimientos (Stock y Caja), Transferencias,
+Inventario y también el Resumen; el de cocina entra solo a Cocina. **Cambia
+las tres contraseñas al crear la base de datos.**

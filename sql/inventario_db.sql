@@ -504,8 +504,10 @@ GROUP BY p.id, p.codigo, p.nombre, p.unidad_medida, p.stock_minimo, p.perecedero
 --                          16=movimientos 32=usuarios 64=config
 --                          128=ventas 256=caja 512=cocina
 --
--- Los tres ultimos bits separan los trabajos: quien cobra no ve las cifras
--- de ventas y quien cocina no puede cobrar.
+-- Los tres ultimos bits separan los trabajos: el de cocina no cobra ni ve
+-- las cifras, y el cajero (Vendedor) ademas lleva la Caja de Movimientos:
+-- ve los ingresos de cada venta y los pagos de servicios, por eso tambien
+-- suma 128 (ventas) y 16 (movimientos).
 --
 -- El ADMINISTRADOR tiene los tres modulos: al ser el dueno puede relevar un
 -- turno y entrar tanto a la Caja como a la Cocina ademas de ver los numeros.
@@ -514,14 +516,14 @@ GROUP BY p.id, p.codigo, p.nombre, p.unidad_medida, p.stock_minimo, p.perecedero
 --
 --   Administrador 127  = 1+2+4+8+16+32+64
 --                      | 128+256+512          -> 1023 (entra a todo)
---   Supervisor    31   = 1+2+4+8
---                      | 128+512              ->  671 (ve ventas y cocina)
---   Operador      19   = 1+2+4
+--   Supervisor    31   = 1+2+4+8+16
+--                      | 128+512              ->  671 (ventas, cocina y movimientos)
+--   Operador      19   = 1+2+16
 --                      | 128+256+512          ->  915 (inventario y caja)
 --   Consulta       1   = 1
 --                      | 128+256+512          ->  897 (solo mira, en todo)
---   Vendedor       3   = 1+2
---                      | 256                  ->  259 (solo la Caja)
+--   Vendedor      19   = 1+2+16
+--                      | 128+256              ->  403 (caja, movimientos e ingresos)
 --   Cocina         3   = 1+2
 --                      | 512                  ->  515 (solo Cocina)
 INSERT INTO `roles` (`id`, `nombre`, `descripcion`, `permisos`) VALUES
@@ -529,7 +531,7 @@ INSERT INTO `roles` (`id`, `nombre`, `descripcion`, `permisos`) VALUES
   (2, 'Supervisor',    'Opera inventarios y ve reportes',   671),
   (3, 'Operador',      'Registra entradas y salidas',       915),
   (4, 'Consulta',      'Solo puede ver',                    897),
-  (5, 'Vendedor',      'Atiende la caja y registra ventas',  259),
+  (5, 'Vendedor',      'Atiende la caja y sus movimientos',   403),
   (6, 'Cocina',        'Ve los pedidos y los prepara',       515);
 
 -- Categorias de cafeteria
@@ -668,8 +670,9 @@ SET FOREIGN_KEY_CHECKS = 1;
 --  USUARIOS INICIALES
 --
 --  Tres cuentas separadas, una por trabajo. El administrador entra a todo
---  (Resumen, Caja, Cocina y los modulos de control); el cajero solo cobra
---  y el de cocina solo prepara pedidos.
+--  (Resumen, Caja, Cocina y los modulos de control); el cajero cobra y
+--  ademas lleva los movimientos y el dinero de la caja; y el de cocina solo
+--  prepara pedidos.
 --
 --    admin@inventario.com   Administrador   Admin123!
 --    caja@inventario.com    Vendedor        Caja123!

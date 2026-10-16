@@ -30,8 +30,8 @@
  *   Adentro de esta misma pantalla hay una segunda seleccion llamada Caja,
  *   que NO es de inventario sino de dinero. Muestra venta por venta cuanto
  *   entro a la caja, quien cobro, con que metodo de pago y cuanto ganamos.
- *   Por eso pide el permiso de ventas (128) y no el de movimientos: las
- *   cifras del negocio son del administrador, no del que mueve mercaderia.
+ *   Por eso pide el permiso de ventas (128) y no el de movimientos: la ven
+ *   el administrador y el cajero (Vendedor); el de cocina no.
  */
 
 require_once __DIR__ . '/nucleo.php';

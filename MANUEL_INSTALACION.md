@@ -223,7 +223,7 @@ Los roles se guardan como **flags de bits** en la columna `permisos`:
 | 64  | Config         |
 
 Roles incluidos: **Administrador** (127), **Supervisor** (31), **Operador**
-(19), **Consulta** (1), **Vendedor** (3) y **Cocina** (3). Los bits se suman:
+(19), **Consulta** (1), **Vendedor** (19) y **Cocina** (3). Los bits se suman:
 un Supervisor suma 1+2+4+8+16 = 31.
 
 La lista exacta de permisos por endpoint está en
