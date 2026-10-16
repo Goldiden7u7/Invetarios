@@ -13,7 +13,7 @@ controla el inventario, cobra las ventas y envia los pedidos a la cocina.
 
 | Modulo | Para que sirve |
 |---|---|
-| **Resumen** | Ventas del dia y del mes, ganancia real, margen, productos que mas se venden y que hay que reponer |
+| **Resumen** | Ventas del dia y del mes, ganancia real, margen y lo que hay que reponer. Las graficas y los rankings viven en un buscador **Graficas y reportes**: se abren solo cuando las pides |
 | **Caja** | Punto de venta: menu de combos, personalizacion de ingredientes, cobro y descuentos |
 | **Cocina** | Cola de pedidos en 3 estados (pendiente / en preparacion / listo). Cada pedido se abre para ver exactamente que preparar y que NO preparar |
 | **Inventario** | Productos con stock por almacen, fecha de vencimiento, nivel minimo y alertas |

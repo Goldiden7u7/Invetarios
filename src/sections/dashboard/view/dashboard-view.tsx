@@ -1,12 +1,6 @@
 import type { IconifyName } from 'src/components/iconify';
-import type {
-  Graficas,
-  Metricas,
-  MovimientoReciente,
-  ProductoPorReponer,
-} from 'src/types/inventario';
+import type { Metricas, MovimientoReciente, ProductoPorReponer } from 'src/types/inventario';
 
-import { useMemo } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 
 import Box from '@mui/material/Box';
@@ -29,17 +23,11 @@ import { fNumber, fCurrency } from 'src/utils/format-number';
 import { useAuth } from 'src/auth';
 import { DashboardContent } from 'src/layouts/dashboard';
 
-import { Chart } from 'src/components/chart';
 import { Iconify } from 'src/components/iconify';
 import { Label, type LabelColor } from 'src/components/label';
 
 import { useDashboard } from '../use-dashboard';
-
-// ----------------------------------------------------------------------
-
-const COLOR_ENTRADA = '#00A76F';
-const COLOR_SALIDA = '#F97066';
-const COLOR_ALMACENES = ['#00A76F', '#2E90FA', '#FDB022', '#7A5AF8', '#F97066'];
+import { CentroGraficas } from './centro-graficas';
 
 // ----------------------------------------------------------------------
 
@@ -84,7 +72,7 @@ export function DashboardView() {
           </Typography>
 
           <Typography variant="body2" sx={{ color: 'inherit', opacity: 0.9 }}>
-            Ventas de hoy, ganancia real, productos que mas se venden y que te falta reponer.
+            Ventas de hoy, ganancia real y lo que falta reponer. Las graficas las abres cuando las necesites.
           </Typography>
         </Box>
 
@@ -118,7 +106,11 @@ export function DashboardView() {
         ))}
       </Stack>
 
-      <Skeleton variant="rounded" height={320} />
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} variant="rounded" height={124} sx={{ flex: 1 }} />
+        ))}
+      </Stack>
     </>
   );
 
@@ -177,16 +169,10 @@ export function DashboardView() {
 
       <Grupo icono="solar:cart-3-bold" titulo="Como van las ventas" sx={{ mb: 4 }}>
         <VentasResumen metricas={metricas} />
-
-        <Stack spacing={2} sx={{ mt: 2 }}>
-          <VentasGraficas datos={graficas} />
-
-          <TopVentas datos={graficas} />
-        </Stack>
       </Grupo>
 
-      <Grupo icono="solar:transfer-vertical-bold-duotone" titulo="Movimiento de stock" sx={{ mb: 2 }}>
-        <Graficas datos={graficas} />
+      <Grupo icono="eva:trending-up-fill" titulo="Graficas y reportes" sx={{ mb: 4 }}>
+        <CentroGraficas datos={graficas} />
       </Grupo>
 
       <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} sx={{ mt: 3 }}>
@@ -411,304 +397,6 @@ function VentasResumen({ metricas, sx }: { metricas: Metricas; sx?: object }) {
       {lista.map((t) => (
         <Tarjeta key={t.titulo} {...t} />
       ))}
-    </Stack>
-  );
-}
-
-// ----------------------------------------------------------------------
-//  Graficas
-// ----------------------------------------------------------------------
-
-function Graficas({ datos }: { datos: Graficas }) {
-  const movimientos = useMemo(() => {
-    const dias = datos.movimientos_diarios ?? [];
-
-    return {
-      series: [
-        { name: 'Entradas', data: dias.map((d) => d.entradas) },
-        { name: 'Salidas', data: dias.map((d) => d.salidas) },
-      ],
-      categorias: dias.map((d) => d.fecha),
-    };
-  }, [datos.movimientos_diarios]);
-
-  const opcionesMovimientos = useMemo(
-    () => ({
-      chart: { type: 'area' as const, toolbar: { show: false }, zoom: { enabled: false } },
-      colors: [COLOR_ENTRADA, COLOR_SALIDA],
-      dataLabels: { enabled: false },
-      stroke: { curve: 'smooth' as const, width: 2 },
-      fill: { type: 'gradient' as const, opacity: 0.3 },
-      xaxis: {
-        categories: movimientos.categorias,
-        labels: { rotate: -45, style: { fontSize: '10px' } },
-        axisBorder: { show: false },
-        axisTicks: { show: false },
-      },
-      yaxis: { labels: { formatter: (v: number) => fNumber(v) } },
-      legend: { position: 'top' as const, horizontalAlign: 'right' as const },
-      grid: { strokeDashArray: 4 },
-    }),
-    [movimientos.categorias]
-  );
-
-  const opcionesAlmacen = useMemo(
-    () => ({
-      chart: { type: 'donut' as const },
-      labels: datos.stock_por_almacen.map((a) => a.nombre),
-      colors: COLOR_ALMACENES,
-      legend: { position: 'bottom' as const },
-      dataLabels: { enabled: false },
-      stroke: { width: 2 },
-      plotOptions: {
-        pie: {
-          donut: {
-            size: '70%',
-            labels: {
-              show: true,
-              name: { show: true },
-              value: { show: true, formatter: (val: string) => fNumber(val) },
-              total: {
-                show: true,
-                label: 'Unidades',
-                formatter: (w: { globals: { seriesTotals: number[] } }) =>
-                  fNumber(w.globals.seriesTotals.reduce((a, b) => a + b, 0)),
-              },
-            },
-          },
-        },
-      },
-    }),
-    [datos.stock_por_almacen]
-  );
-
-  return (
-    <Stack direction={{ xs: 'column', lg: 'row' }} spacing={3}>
-      <Card sx={{ p: 3, flex: 1, minWidth: 0 }}>
-        <Typography variant="h6">Movimientos de los ultimos 30 dias</Typography>
-
-        <Box sx={{ height: 300, mt: 2 }}>
-          <Chart
-            type="area"
-            series={movimientos.series}
-            options={opcionesMovimientos}
-            sx={{ height: '100%' }}
-          />
-        </Box>
-      </Card>
-
-      <Card sx={{ p: 3, width: { lg: 380 } }}>
-        <Typography variant="h6">Unidades por almacen</Typography>
-
-        <Box sx={{ height: 300, mt: 2 }}>
-          <Chart
-            type="donut"
-            series={datos.stock_por_almacen.map((a) => a.unidades)}
-            options={opcionesAlmacen}
-            sx={{ height: '100%' }}
-          />
-        </Box>
-      </Card>
-    </Stack>
-  );
-}
-
-// ----------------------------------------------------------------------
-//  Graficas de ventas (diarias y semanales)
-// ----------------------------------------------------------------------
-
-const COLOR_VENTAS = '#2E90FA';
-const COLOR_SEMANA = '#00A76F';
-
-function VentasGraficas({ datos }: { datos: Graficas }) {
-  const diarias = useMemo(() => {
-    const lista = datos.ventas_diarias ?? [];
-
-    return {
-      series: [{ name: 'Ventas', data: lista.map((d) => d.total) }],
-      categorias: lista.map((d) => d.fecha),
-    };
-  }, [datos.ventas_diarias]);
-
-  const opcionesDiarias = useMemo(
-    () => ({
-      chart: { type: 'area' as const, toolbar: { show: false }, zoom: { enabled: false } },
-      colors: [COLOR_VENTAS],
-      dataLabels: { enabled: false },
-      stroke: { curve: 'smooth' as const, width: 2 },
-      fill: { type: 'gradient' as const, opacity: 0.3 },
-      xaxis: {
-        categories: diarias.categorias,
-        labels: { rotate: -45, style: { fontSize: '10px' } },
-        axisBorder: { show: false },
-        axisTicks: { show: false },
-      },
-      yaxis: { labels: { formatter: (v: number) => fCurrency(v) } },
-      legend: { show: false },
-      grid: { strokeDashArray: 4 },
-    }),
-    [diarias.categorias]
-  );
-
-  const semanales = useMemo(() => {
-    const lista = datos.ventas_semanales ?? [];
-
-    return {
-      series: [{ name: 'Ventas', data: lista.map((d) => d.total) }],
-      categorias: lista.map((d) => d.semana),
-    };
-  }, [datos.ventas_semanales]);
-
-  const opcionesSemanales = useMemo(
-    () => ({
-      chart: { type: 'bar' as const, toolbar: { show: false }, zoom: { enabled: false } },
-      colors: [COLOR_SEMANA],
-      dataLabels: { enabled: false },
-      plotOptions: { bar: { columnWidth: '45%', borderRadius: 4 } },
-      xaxis: {
-        categories: semanales.categorias,
-        labels: { style: { fontSize: '10px' } },
-        axisBorder: { show: false },
-        axisTicks: { show: false },
-      },
-      yaxis: { labels: { formatter: (v: number) => fCurrency(v) } },
-      legend: { show: false },
-      grid: { strokeDashArray: 4 },
-    }),
-    [semanales.categorias]
-  );
-
-  return (
-    <Stack direction={{ xs: 'column', lg: 'row' }} spacing={3}>
-      <Card sx={{ p: 3, flex: 1, minWidth: 0 }}>
-        <Typography variant="h6">Ventas de los ultimos 30 dias</Typography>
-
-        <Box sx={{ height: 300, mt: 2 }}>
-          <Chart
-            type="area"
-            series={diarias.series}
-            options={opcionesDiarias}
-            sx={{ height: '100%' }}
-          />
-        </Box>
-      </Card>
-
-      <Card sx={{ p: 3, width: { lg: 400 }, minWidth: 0 }}>
-        <Typography variant="h6">Ventas por semana (8 semanas)</Typography>
-
-        <Box sx={{ height: 300, mt: 2 }}>
-          <Chart
-            type="bar"
-            series={semanales.series}
-            options={opcionesSemanales}
-            sx={{ height: '100%' }}
-          />
-        </Box>
-      </Card>
-    </Stack>
-  );
-}
-
-// ----------------------------------------------------------------------
-//  Top de ventas (combos y productos)
-// ----------------------------------------------------------------------
-
-const TIPO_COMBO: Record<string, LabelColor> = {
-  comida: 'warning',
-  snack: 'info',
-  bebida: 'success',
-};
-
-function TopVentas({ datos }: { datos: Graficas }) {
-  const topCombos = datos.top_combos ?? [];
-  const topProductos = datos.top_productos ?? [];
-  const maxProducto = Math.max(1, ...topProductos.map((p) => p.cantidad));
-
-  return (
-    <Stack direction={{ xs: 'column', lg: 'row' }} spacing={3}>
-      <Card sx={{ p: 3, flex: 1, minWidth: 0 }}>
-        <Typography variant="h6">Combos mas vendidos</Typography>
-
-        {topCombos.length === 0 ? (
-          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 2 }}>
-            Aun no hay ventas registradas.
-          </Typography>
-        ) : (
-          <Table size="small" sx={{ mt: 1 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Combo</TableCell>
-                <TableCell>Tipo</TableCell>
-                <TableCell align="right">Unidades</TableCell>
-                <TableCell align="right">Venta total</TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {topCombos.map((combo) => (
-                <TableRow key={combo.id} hover>
-                  <TableCell>
-                    <Typography variant="body2" noWrap>
-                      {combo.nombre}
-                    </Typography>
-                  </TableCell>
-
-                  <TableCell>
-                    <Label color={TIPO_COMBO[combo.tipo] ?? 'default'} variant="soft">
-                      {combo.tipo}
-                    </Label>
-                  </TableCell>
-
-                  <TableCell align="right">{fNumber(combo.unidades)}</TableCell>
-                  <TableCell align="right">{fCurrency(combo.venta_total)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </Card>
-
-      <Card sx={{ p: 3, width: { lg: 400 }, minWidth: 0 }}>
-        <Typography variant="h6">Ingredientes con mas salida</Typography>
-
-        {topProductos.length === 0 ? (
-          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 2 }}>
-            Sin datos de consumo todavia.
-          </Typography>
-        ) : (
-          <Stack spacing={1.5} sx={{ mt: 2 }}>
-            {topProductos.map((producto) => (
-              <Box key={producto.producto_id}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                  <Typography variant="body2" noWrap>
-                    {producto.nombre}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    {fNumber(producto.cantidad)}
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    height: 8,
-                    borderRadius: 1,
-                    bgcolor: (theme) => varAlpha(theme.vars.palette.primary.main, 0.12),
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: `${(producto.cantidad / maxProducto) * 100}%`,
-                      height: '100%',
-                      borderRadius: 1,
-                      bgcolor: 'primary.main',
-                    }}
-                  />
-                </Box>
-              </Box>
-            ))}
-          </Stack>
-        )}
-      </Card>
     </Stack>
   );
 }
